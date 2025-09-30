@@ -1,0 +1,6 @@
+character_config:
+  conf_name: 'bloodsucker'
+  conf_uid: 'bloodsucker_001'
+  live2d_model_name: 'bloodsucker'
+  character_name: 'Bloodsucker'
+  avatar: ''

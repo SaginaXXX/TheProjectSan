@@ -1,0 +1,23 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "sakura.moc3",
+		"Textures": [
+			"sakura.4096/texture_00.png"
+		],
+		"Physics": "sakura.physics3.json",
+		"DisplayInfo": "sakura.cdi3.json"
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": []
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		}
+	]
+}

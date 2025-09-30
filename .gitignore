@@ -1,0 +1,45 @@
+# Envs
+
+.venv/
+venv/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+build/
+out/
+.next/
+.turbo/
+
+# Project caches/logs
+.cache/
+cache/
+logs/
+*.log
+
+# OS/editor
+.DS_Store
+*.swp
+.vscode/
+
+# Secrets
+*.env
+.env.*
+conf.yaml
+mcp_servers.json
+model_dict.json
+
+# Local assets (use Git LFS or keep local)
+models/
+videos/
+live2d-models/
+ads/
+/frontend

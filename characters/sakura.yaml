@@ -1,0 +1,7 @@
+character_config:
+  conf_name: 'sakura'
+  conf_uid: 'sakura_001'
+  live2d_model_name: 'sakura'
+  character_name: 'Sakura'
+  avatar: 'sakura.png'
+
