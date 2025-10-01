@@ -1,0 +1,59 @@
+# Windows requirements for TheProjectSan
+# Derived from requirements.linux.txt with platform adjustments (uvloop removed)
+
+fastapi==0.115.12
+uvicorn==0.34.0
+starlette==0.46.1
+httpx==0.28.1
+httpcore==1.0.7
+websockets==15.0.1
+websocket-client==1.8.0
+email-validator==2.2.0
+python-multipart==0.0.20
+python-dotenv==1.1.0
+
+loguru==0.7.3
+rich==14.0.0
+requests==2.32.3
+pyyaml==6.0.2
+pydantic==2.11.3
+pydantic-core==2.33.1
+anyio==4.9.0
+
+numpy==1.26.4
+scipy==1.15.2
+soundfile==0.13.1
+onnxruntime==1.21.0
+
+# Speech/Audio
+sherpa-onnx==1.10.46
+silero-vad==5.1.2
+edge-tts==7.0.0
+
+# LLM-related (choose what you need in conf.yaml)
+openai==1.72.0
+groq==0.22.0
+anthropic==0.49.0
+letta-client==0.1.101
+
+# Torch stack (CPU by default; for CUDA follow official PyTorch instructions if needed)
+torch==2.6.0
+torchaudio==2.6.0
+
+# Templating & misc
+jinja2==3.1.6
+pysbd==0.3.4
+
+# Uvicorn extras (optional; Windows wheels available)
+httptools==0.6.4
+watchfiles==1.0.5
+
+# Azure TTS/ASR (optional; enable via conf.yaml if needed)
+azure-cognitiveservices-speech==1.43.0
+
+# Extra runtime deps for Fish TTS and MCP
+fish-audio-sdk
+mcp
+mcp-server
+
+
