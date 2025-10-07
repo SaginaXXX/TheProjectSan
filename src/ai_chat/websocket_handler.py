@@ -253,31 +253,67 @@ class WebSocketHandler:
                 logger.warning(f"Unknown message type: {msg_type}")
 
     async def handle_disconnect(self, client_uid: str) -> None:
-        """Handle client disconnection"""
-        # Clean up other client data
-        # IMPORTANT: close context BEFORE popping it to avoid leaks
+        """Handle client disconnection - 彻底清理所有资源防止泄漏"""
+        logger.info(f"🔌 开始清理客户端 {client_uid} 的资源...")
+        
+        # 1. 先取消所有进行中的任务，避免任务继续使用即将被清理的资源
+        if client_uid in self.current_conversation_tasks:
+            task = self.current_conversation_tasks[client_uid]
+            if task and not task.done():
+                logger.info(f"  ⏹️  取消进行中的对话任务 for {client_uid}")
+                task.cancel()
+                try:
+                    # 等待任务完全取消（最多等待2秒）
+                    await asyncio.wait_for(task, timeout=2.0)
+                except (asyncio.CancelledError, asyncio.TimeoutError):
+                    pass
+                except Exception as e:
+                    logger.warning(f"  ⚠️  任务取消时出错: {e}")
+            self.current_conversation_tasks.pop(client_uid, None)
+        
+        # 2. 清理ServiceContext（包含 MCP Client 和 Agent Engine）
         context = self.client_contexts.get(client_uid)
-        try:
-            if context:
+        if context:
+            logger.info(f"  🗑️  清理 ServiceContext for {client_uid}")
+            try:
                 await context.close()
-        except Exception as e:
-            logger.error(f"Error closing ServiceContext for {client_uid}: {e}")
-
+            except Exception as e:
+                logger.error(f"  ❌ ServiceContext清理失败 for {client_uid}: {e}")
+        
+        # 3. 清理所有客户端相关的状态字典
         self.client_connections.pop(client_uid, None)
         self.client_contexts.pop(client_uid, None)
         self.received_data_buffers.pop(client_uid, None)
         self._last_heartbeat.pop(client_uid, None)
-        if client_uid in self.current_conversation_tasks:
-            task = self.current_conversation_tasks[client_uid]
-            if task and not task.done():
-                task.cancel()
-            self.current_conversation_tasks.pop(client_uid, None)
-
-        logger.info(f"Client {client_uid} disconnected. Active: {len(self.client_connections)}")
-        message_handler.cleanup_client(client_uid)
         
-        # 清理唤醒词管理器中的客户端状态
-        wake_word_manager.cleanup_client(client_uid)
+        # 4. 清理外部管理器中的状态
+        try:
+            message_handler.cleanup_client(client_uid)
+            logger.info(f"  ✅ 清理 message_handler for {client_uid}")
+        except Exception as e:
+            logger.warning(f"  ⚠️  message_handler清理失败: {e}")
+        
+        try:
+            wake_word_manager.cleanup_client(client_uid)
+            logger.info(f"  ✅ 清理 wake_word_manager for {client_uid}")
+        except Exception as e:
+            logger.warning(f"  ⚠️  wake_word_manager清理失败: {e}")
+
+        logger.info(f"✅ 客户端 {client_uid} 资源清理完成. 剩余活跃连接: {len(self.client_connections)}")
+        
+        # 5. 如果没有活跃连接了，做一次全局清理检查
+        if len(self.client_connections) == 0:
+            logger.info("📊 所有客户端已断开，检查是否有残留资源...")
+            # 清理可能泄漏的数据
+            if self.current_conversation_tasks:
+                logger.warning(f"⚠️  发现残留任务: {list(self.current_conversation_tasks.keys())}")
+                self.current_conversation_tasks.clear()
+            if self.received_data_buffers:
+                logger.warning(f"⚠️  发现残留音频缓冲: {list(self.received_data_buffers.keys())}")
+                self.received_data_buffers.clear()
+            if self._last_heartbeat:
+                logger.warning(f"⚠️  发现残留心跳记录: {list(self._last_heartbeat.keys())}")
+                self._last_heartbeat.clear()
 
     async def _handle_interrupt(
         self, websocket: WebSocket, client_uid: str, data: WSMessage
