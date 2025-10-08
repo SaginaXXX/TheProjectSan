@@ -304,6 +304,7 @@ class WebSocketHandler:
         # 5. 如果没有活跃连接了，做一次全局清理检查
         if len(self.client_connections) == 0:
             logger.info("📊 所有客户端已断开，检查是否有残留资源...")
+            
             # 清理可能泄漏的数据
             if self.current_conversation_tasks:
                 logger.warning(f"⚠️  发现残留任务: {list(self.current_conversation_tasks.keys())}")
@@ -314,6 +315,17 @@ class WebSocketHandler:
             if self._last_heartbeat:
                 logger.warning(f"⚠️  发现残留心跳记录: {list(self._last_heartbeat.keys())}")
                 self._last_heartbeat.clear()
+            
+            # ✅ 添加全局任务统计（帮助诊断性能问题）
+            all_tasks = asyncio.all_tasks()
+            active_tasks = [t for t in all_tasks if not t.done()]
+            logger.info(f"📊 全局任务统计: 总任务={len(all_tasks)}, 活跃={len(active_tasks)}, 已完成={len(all_tasks)-len(active_tasks)}")
+            
+            if len(active_tasks) > 20:
+                logger.warning(f"⚠️  活跃任务数量较多: {len(active_tasks)}")
+                logger.warning("前 5 个活跃任务:")
+                for task in list(active_tasks)[:5]:
+                    logger.warning(f"  - {task.get_name() or 'unnamed'}")
 
     async def _handle_interrupt(
         self, websocket: WebSocket, client_uid: str, data: WSMessage
