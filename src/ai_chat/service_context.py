@@ -47,6 +47,9 @@ class ServiceContext:
         self.system_config: SystemConfig = None
         self.character_config: CharacterConfig = None
         
+        # ✅ 追踪后台任务，防止内存泄漏
+        self._background_tasks: list = []
+        
         # agent components
         self.live2d_model: Live2dModel = None
         self.asr_engine: ASRInterface = None
@@ -226,6 +229,20 @@ class ServiceContext:
     async def close(self):
         """Clean up resources, especially the MCPClient."""
         logger.info("Closing ServiceContext resources...")
+        
+        # ✅ 取消所有后台任务
+        if hasattr(self, '_background_tasks'):
+            for task in self._background_tasks:
+                if not task.done():
+                    logger.info("  ⏹️  取消后台初始化任务")
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
+            self._background_tasks.clear()
+            logger.info("  ✅ 所有后台任务已清理")
+        
         if self.mcp_client:
             logger.info(f"Closing MCPClient for context instance {id(self)}...")
             await self.mcp_client.aclose()
@@ -579,7 +596,21 @@ class ServiceContext:
                     except Exception as init_err:
                         logger.warning(f"Deferred init after switch encountered error: {init_err}")
 
-                asyncio.create_task(_finish_heavy_init())
+                # ✅ 取消旧的初始化任务（如果有）
+                for task in self._background_tasks:
+                    if not task.done():
+                        logger.info("⏹️  取消旧的初始化任务")
+                        task.cancel()
+                        try:
+                            await task
+                        except asyncio.CancelledError:
+                            pass
+                self._background_tasks.clear()
+                
+                # ✅ 创建新任务并追踪
+                task = asyncio.create_task(_finish_heavy_init())
+                self._background_tasks.append(task)
+                logger.info("🔧 启动后台初始化任务")
             else:
                 raise ValueError(
                     f"Failed to load configuration from {config_file_name}"

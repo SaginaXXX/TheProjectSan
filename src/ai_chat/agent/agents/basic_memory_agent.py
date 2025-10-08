@@ -700,11 +700,14 @@ class BasicMemoryAgent(AgentInterface):
                             logger.debug(f"JSON解析成功，类型: {json_data.get('type')}")
                             if json_data.get("type") == "video_response":
                                 logger.info(f"Detected laundry video response: {json_data}")
-                                # Process through LaundryHandler
-                                websocket_message = self._laundry_handler.process_mcp_tool_result(content)
-                                # Send WebSocket message (fire-and-forget to avoid blocking speech)
-                                asyncio.create_task(self._websocket_send_func(json.dumps(websocket_message)))
-                                logger.info("Queued laundry video WebSocket message to frontend")
+                            # Process through LaundryHandler
+                            websocket_message = self._laundry_handler.process_mcp_tool_result(content)
+                            # ✅ Send WebSocket message (直接等待，WebSocket 发送很快)
+                            try:
+                                await self._websocket_send_func(json.dumps(websocket_message))
+                                logger.info("Sent laundry video WebSocket message to frontend")
+                            except Exception as e:
+                                logger.error(f"Failed to send laundry video message: {e}")
                         except json.JSONDecodeError as e:
                             logger.debug(f"JSON解析失败: {e}")
                             pass
