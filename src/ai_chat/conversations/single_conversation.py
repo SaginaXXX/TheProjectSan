@@ -104,11 +104,17 @@ async def process_single_conversation(
             logger.info(f"With {len(images)} images")
 
         try:
-            # Set WebSocket send function for laundry responses
+            # 🔍 诊断：对话开始前检查agent状态
+            if hasattr(context.agent_engine, '_memory'):
+                logger.info(f"🔍 [诊断] 对话开始 - agent memory: {len(context.agent_engine._memory)}条")
+                logger.info(f"  Input: {input_text[:100]}")
+            
+            # Set WebSocket send function for agent responses
             if hasattr(context.agent_engine, 'set_websocket_send_func'):
                 context.agent_engine.set_websocket_send_func(websocket_send)
             
             # agent.chat yields Union[SentenceOutput, Dict[str, Any]]
+            t_agent_start = asyncio.get_event_loop().time()
             agent_output_stream = context.agent_engine.chat(batch_input)
             first_llm_token_logged = False
 

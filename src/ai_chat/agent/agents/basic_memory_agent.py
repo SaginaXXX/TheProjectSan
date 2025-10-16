@@ -26,7 +26,6 @@ from ..input_types import BatchInput, TextSource
 from prompts import prompt_loader
 from ...mcpp.tool_manager import ToolManager
 from ...mcpp.json_detector import StreamJSONDetector
-from ...conversations.laundry_handler import LaundryHandler
 from ...mcpp.types import ToolCallObject
 from ...mcpp.tool_executor import ToolExecutor
 
@@ -70,7 +69,6 @@ class BasicMemoryAgent(AgentInterface):
         self._tool_executor = tool_executor
         self._mcp_prompt_string = mcp_prompt_string
         self._json_detector = StreamJSONDetector()
-        self._laundry_handler = LaundryHandler()
         self._websocket_send_func = None  # Will be set by external caller
 
         self._formatted_tools_openai = []
@@ -117,7 +115,7 @@ class BasicMemoryAgent(AgentInterface):
         logger.info("BasicMemoryAgent initialized.")
 
     def set_websocket_send_func(self, websocket_send_func):
-        """Set the WebSocket send function for laundry responses."""
+        """Set the WebSocket send function for agent responses."""
         self._websocket_send_func = websocket_send_func
 
     def _set_llm(self, llm: StatelessLLMInterface):
@@ -254,6 +252,15 @@ class BasicMemoryAgent(AgentInterface):
     def _to_messages(self, input_data: BatchInput) -> List[Dict[str, Any]]:
         """Prepare messages for LLM API call."""
         messages = self._memory.copy()
+        
+        # 🔍 诊断：检查发送给LLM的消息数量
+        logger.info(f"🔍 [诊断] 准备LLM消息 - memory: {len(self._memory)}条")
+        if len(self._memory) > 0:
+            logger.info(f"  Memory消息:")
+            for i, msg in enumerate(self._memory):
+                content = msg.get('content', '')[:50]
+                logger.info(f"    [{i+1}] {msg.get('role')}: {content}...")
+        
         user_content = []
         text_prompt = self._to_text_prompt(input_data)
         if text_prompt:
@@ -461,8 +468,6 @@ class BasicMemoryAgent(AgentInterface):
                         update = await anext(tool_executor_iterator)
                         if update.get("type") == "final_tool_results":
                             tool_results_for_llm = update.get("results", [])
-                            # 检查工具结果中是否有洗衣店视频响应
-                            await self._process_laundry_tool_results(tool_results_for_llm)
                             break
                         else:
                             yield update
@@ -499,108 +504,6 @@ class BasicMemoryAgent(AgentInterface):
             """Process chat with memory and tools."""
             self.reset_interrupt()
             self.prompt_mode_flag = False
-
-            # 检查是否为洗衣机相关查询
-            user_text = ""
-            if input_data.texts:
-                for text_data in input_data.texts:
-                    if text_data.source == TextSource.INPUT:
-                        user_text += text_data.content
-            
-            # 如果是洗衣机相关查询，直接调用洗衣机工具
-            if user_text and self._laundry_handler.is_laundry_related_query(user_text):
-                logger.info(f"🧺 检测到洗衣机相关查询: {user_text}")
-                machine_id = self._laundry_handler.extract_machine_number(user_text)
-                language_mode = self._laundry_handler.detect_language_mode(user_text)
-                # 即刻反馈，降低主观等待
-                try:
-                    if language_mode == "ja":
-                        yield "少々お待ちください。チュートリアルを確認します。"
-                    elif language_mode == "en":
-                        yield "One moment, fetching the tutorial for you."
-                    else:
-                        yield "稍等，我马上为您查找教程。"
-                except Exception:
-                    pass
-                
-                # 调用洗衣机MCP工具
-                if self._tool_executor:
-                    tool_call = self._laundry_handler.format_mcp_tool_call(
-                        user_text, machine_id, language_mode
-                    )
-                    
-                    try:
-                        # 构造工具调用对象
-                        from ...mcpp.types import ToolCallObject, ToolCallFunctionObject
-                        tool_call_obj = ToolCallObject(
-                            id=f"laundry_{hash(user_text)}",
-                            type="function",
-                            index=0,
-                            function=ToolCallFunctionObject(
-                                name=tool_call["tool_name"],
-                                arguments=json.dumps(tool_call["arguments"])
-                            )
-                        )
-                        
-                        # 执行工具调用
-                        final_results = []
-                        async for result in self._tool_executor.execute_tools([tool_call_obj], "OpenAI"):
-                            # 只处理最终的工具结果
-                            if isinstance(result, dict) and result.get("type") == "final_tool_results":
-                                final_results = result.get("results", [])
-                                break
-                        
-                        # 处理工具结果
-                        if final_results:
-                            logger.debug(f"洗衣机工具调用返回最终结果数量: {len(final_results)}")
-                            # 先处理潜在的视频播放，通过 WebSocket 通知前端
-                            await self._process_laundry_tool_results(final_results)
-
-                            # 汇总可直接对用户朗读的文本内容
-                            speak_texts: list[str] = []
-                            try:
-                                for result in final_results:
-                                    if isinstance(result, dict) and result.get("role") == "tool":
-                                        content = result.get("content", "")
-                                        if isinstance(content, str) and content:
-                                            try:
-                                                parsed = json.loads(content)
-                                            except json.JSONDecodeError:
-                                                parsed = None
-
-                                            if isinstance(parsed, dict):
-                                                resp_type = parsed.get("type")
-                                                if resp_type == "video_response":
-                                                    # 使用工具自带的 response_text 作为口头反馈
-                                                    if parsed.get("response_text"):
-                                                        speak_texts.append(parsed["response_text"])
-                                                elif resp_type in ("text_response", "refresh_response"):
-                                                    if parsed.get("content"):
-                                                        speak_texts.append(parsed["content"])
-                                                    elif parsed.get("message"):
-                                                        speak_texts.append(parsed["message"])
-                                            else:
-                                                # 非 JSON 文本，直接朗读
-                                                speak_texts.append(str(content))
-                            except Exception as parse_err:
-                                logger.error(f"解析洗衣机工具结果用于回复时出错: {parse_err}")
-
-                            # 若收集到文本，直接回复用户这些文本
-                            if speak_texts:
-                                yield "\n".join(speak_texts)
-                                return
-
-                            # 否则退回到语言模式下的简短确认
-                            if language_mode == "ja":
-                                yield "承知いたしました。"
-                            else:
-                                yield "好的。"
-                            return
-                        else:
-                            logger.warning("洗衣机工具调用没有返回最终结果")
-                    except Exception as e:
-                        logger.error(f"洗衣机工具调用失败: {e}")
-                        # 如果工具调用失败，回退到正常流程
 
             messages = self._to_messages(input_data)
             tools = None
@@ -673,45 +576,3 @@ class BasicMemoryAgent(AgentInterface):
     def reset_interrupt(self) -> None:
         """Reset interrupt flag."""
         self._interrupt_handled = False
-
-
-    async def _process_laundry_tool_results(self, tool_results):
-        """Process tool results to check for laundry video responses."""
-        import json
-        import asyncio
-        
-        logger.debug(f"开始处理洗衣机工具结果，结果数量: {len(tool_results)}")
-        
-        if not self._websocket_send_func:
-            logger.warning("No WebSocket send function available for laundry processing")
-            return
-            
-        for i, result in enumerate(tool_results):
-            try:
-                logger.debug(f"处理结果 {i}: type={type(result)}, keys={list(result.keys()) if isinstance(result, dict) else 'N/A'}")
-                # Check if this is a tool result message
-                if isinstance(result, dict) and result.get("role") == "tool":
-                    content = result.get("content", "")
-                    logger.debug(f"找到工具结果，内容长度: {len(content) if isinstance(content, str) else 'N/A'}")
-                    if isinstance(content, str):
-                        try:
-                            # Try to parse as JSON
-                            json_data = json.loads(content)
-                            logger.debug(f"JSON解析成功，类型: {json_data.get('type')}")
-                            if json_data.get("type") == "video_response":
-                                logger.info(f"Detected laundry video response: {json_data}")
-                            # Process through LaundryHandler
-                            websocket_message = self._laundry_handler.process_mcp_tool_result(content)
-                            # ✅ Send WebSocket message (直接等待，WebSocket 发送很快)
-                            try:
-                                await self._websocket_send_func(json.dumps(websocket_message))
-                                logger.info("Sent laundry video WebSocket message to frontend")
-                            except Exception as e:
-                                logger.error(f"Failed to send laundry video message: {e}")
-                        except json.JSONDecodeError as e:
-                            logger.debug(f"JSON解析失败: {e}")
-                            pass
-                else:
-                    logger.debug(f"结果不是工具消息，role={result.get('role') if isinstance(result, dict) else 'N/A'}")
-            except Exception as e:
-                logger.error(f"Error processing laundry tool result: {e}")

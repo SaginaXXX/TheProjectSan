@@ -174,6 +174,18 @@ class WebSocketHandler:
     async def _init_service_context(self, send_text: Callable, client_uid: str) -> ServiceContext:
         """Initialize service context for a new session by cloning the default context"""
         session_service_context = ServiceContext()
+        
+        # 🔍 诊断：检查agent memory状态
+        if hasattr(self.default_context_cache.agent_engine, '_memory'):
+            memory_len = len(self.default_context_cache.agent_engine._memory)
+            logger.info(f"🔍 [诊断] 新连接时 agent memory长度: {memory_len}")
+            if memory_len > 0:
+                logger.info(f"  最近3条消息:")
+                for msg in self.default_context_cache.agent_engine._memory[-3:]:
+                    logger.info(f"    {msg.get('role')}: {msg.get('content', '')[:50]}...")
+        
+        # ✅ 单用户优化：复用MCP组件，确保agent始终使用同一套工具
+        # 避免每次连接创建新的tool_executor导致agent引用失效
         await session_service_context.load_cache(
             config=self.default_context_cache.config.model_copy(deep=True),
             system_config=self.default_context_cache.system_config.model_copy(
@@ -191,6 +203,11 @@ class WebSocketHandler:
             tool_adapter=self.default_context_cache.tool_adapter,
             send_text=send_text,
             client_uid=client_uid,
+            # ✅ 复用default_context的MCP组件（单用户场景）
+            mcp_client=self.default_context_cache.mcp_client,
+            tool_manager=self.default_context_cache.tool_manager,
+            tool_executor=self.default_context_cache.tool_executor,
+            mcp_prompt=self.default_context_cache.mcp_prompt,
         )
         return session_service_context
 
@@ -271,12 +288,13 @@ class WebSocketHandler:
                     logger.warning(f"  ⚠️  任务取消时出错: {e}")
             self.current_conversation_tasks.pop(client_uid, None)
         
-        # 2. 清理ServiceContext（包含 MCP Client 和 Agent Engine）
+        # 2. 清理ServiceContext（✅ 单用户优化：跳过共享组件清理）
         context = self.client_contexts.get(client_uid)
         if context:
             logger.info(f"  🗑️  清理 ServiceContext for {client_uid}")
             try:
-                await context.close()
+                # ✅ skip_shared_cleanup=True 避免关闭共享的agent和mcp_client
+                await context.close(skip_shared_cleanup=True)
             except Exception as e:
                 logger.error(f"  ❌ ServiceContext清理失败 for {client_uid}: {e}")
         
@@ -321,11 +339,18 @@ class WebSocketHandler:
             active_tasks = [t for t in all_tasks if not t.done()]
             logger.info(f"📊 全局任务统计: 总任务={len(all_tasks)}, 活跃={len(active_tasks)}, 已完成={len(all_tasks)-len(active_tasks)}")
             
-            if len(active_tasks) > 20:
+            # ✅ 降低阈值，更早发现问题（从20降到5）
+            if len(active_tasks) > 5:
                 logger.warning(f"⚠️  活跃任务数量较多: {len(active_tasks)}")
-                logger.warning("前 5 个活跃任务:")
-                for task in list(active_tasks)[:5]:
-                    logger.warning(f"  - {task.get_name() or 'unnamed'}")
+                logger.warning("前 10 个活跃任务:")
+                for i, task in enumerate(list(active_tasks)[:10], 1):
+                    task_name = task.get_name() or 'unnamed'
+                    # 尝试获取任务的协程名称（更详细的信息）
+                    try:
+                        coro_name = task.get_coro().__qualname__ if hasattr(task.get_coro(), '__qualname__') else str(task.get_coro())
+                    except:
+                        coro_name = 'unknown'
+                    logger.warning(f"  {i}. {task_name} ({coro_name})")
 
     async def _handle_interrupt(
         self, websocket: WebSocket, client_uid: str, data: WSMessage

@@ -219,9 +219,23 @@ class MCPClient:
         logger.info(
             f"MCPC: Closing client instance and {len(self.active_sessions)} active connections..."
         )
+        
+        # 🔍 诊断：记录关闭前的状态
+        logger.info(f"  🔍 Sessions to close: {list(self.active_sessions.keys())}")
+        
         try:
             try:
+                # 强制关闭所有session（确保服务器进程被终止）
+                for server_name, session in list(self.active_sessions.items()):
+                    try:
+                        logger.debug(f"  🔄 关闭 session: {server_name}")
+                        await asyncio.wait_for(session.close(), timeout=2.0)
+                    except Exception as e:
+                        logger.warning(f"  ⚠️  关闭session '{server_name}' 失败: {e}")
+                
+                # 清理exit_stack（这会终止服务器进程）
                 await self.exit_stack.aclose()
+                logger.info("  ✅ exit_stack已清理")
             except Exception as e:
                 # Swallow cleanup errors from anyio cancel scopes to avoid breaking callers
                 logger.warning(f"MCPC: exit_stack.aclose() raised during cleanup: {e}")
