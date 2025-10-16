@@ -146,11 +146,6 @@ class WebSocketServer:
 
         # Mount static files with CORS-enabled handlers
         self.app.mount(
-            "/videos",
-            CORSStaticFiles(directory="videos"),
-            name="videos",
-        )
-        self.app.mount(
             "/live2d-models",
             CORSStaticFiles(directory="live2d-models"),
             name="live2d-models",
@@ -166,7 +161,7 @@ class WebSocketServer:
             name="avatars",
         )
         
-        # Mount ads directory for advertisement carousel (separate from laundry videos)
+        # Mount ads directory for advertisement carousel
         self.app.mount(
             "/ads",
             CORSStaticFiles(directory="ads"),
@@ -199,3 +194,5 @@ class WebSocketServer:
         if os.path.exists(cache_dir):
             shutil.rmtree(cache_dir)
             os.makedirs(cache_dir)
+
+

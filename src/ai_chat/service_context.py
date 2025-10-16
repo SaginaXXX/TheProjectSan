@@ -103,6 +103,16 @@ class ServiceContext:
             f"Initializing MCP components: use_mcpp={use_mcpp}, enabled_servers={enabled_servers}"
         )
 
+        # 🔍 诊断：在创建新MCP Client前，先清理旧的
+        if self.mcp_client:
+            logger.warning("⚠️  检测到旧MCP Client未清理，先关闭...")
+            logger.info(f"  🔍 旧Client活跃sessions: {len(self.mcp_client.active_sessions)}")
+            try:
+                await asyncio.wait_for(self.mcp_client.aclose(), timeout=3.0)
+                logger.info("  ✅ 旧MCP Client已清理")
+            except Exception as e:
+                logger.error(f"  ❌ 清理旧MCP Client失败: {e}")
+
         # Reset MCP components first
         self.mcp_server_registery = None
         self.tool_manager = None
@@ -207,7 +217,7 @@ class ServiceContext:
             # 6. Warm up MCP servers (optional best-effort): list tools to establish sessions
             try:
                 if self.mcp_client and enabled_servers:
-                    # Warm up commonly used servers (e.g., laundry-assistant)
+                    # Warm up commonly used servers
                     for server_name in enabled_servers:
                         try:
                             await self.mcp_client.list_tools(server_name)
@@ -226,8 +236,13 @@ class ServiceContext:
                 "MCP components not initialized (use_mcpp is False or no enabled servers)."
             )
 
-    async def close(self):
-        """Clean up resources, especially the MCPClient."""
+    async def close(self, skip_shared_cleanup: bool = False):
+        """Clean up resources, especially the MCPClient.
+        
+        Args:
+            skip_shared_cleanup: If True, skip cleaning shared components (agent, mcp_client).
+                                 Used in single-user scenarios where components are reused.
+        """
         logger.info("Closing ServiceContext resources...")
         
         # ✅ 取消所有后台任务
@@ -243,10 +258,32 @@ class ServiceContext:
             self._background_tasks.clear()
             logger.info("  ✅ 所有后台任务已清理")
         
+        # ✅ 单用户优化：跳过共享组件的清理
+        if skip_shared_cleanup:
+            logger.info("  ♻️  跳过共享组件清理（单用户模式）")
+            # 只清空引用，不关闭实际组件
+            self.mcp_client = None
+            self.agent_engine = None
+            logger.info("ServiceContext closed (shared components preserved).")
+            return
+        
+        # 🔍 诊断：MCP Client清理（仅在非共享模式）
         if self.mcp_client:
             logger.info(f"Closing MCPClient for context instance {id(self)}...")
-            await self.mcp_client.aclose()
-            self.mcp_client = None
+            logger.info(f"  🔍 活跃MCP sessions: {len(self.mcp_client.active_sessions)}")
+            logger.info(f"  🔍 Sessions: {list(self.mcp_client.active_sessions.keys())}")
+            try:
+                await asyncio.wait_for(self.mcp_client.aclose(), timeout=5.0)
+                logger.info("  ✅ MCPClient已关闭")
+            except asyncio.TimeoutError:
+                logger.error("  ❌ MCPClient关闭超时！可能有服务器进程残留")
+            except Exception as e:
+                logger.error(f"  ❌ MCPClient关闭失败: {e}")
+            finally:
+                self.mcp_client = None
+        else:
+            logger.debug("  ⏭️  无MCP Client需要关闭")
+            
         if self.agent_engine and hasattr(self.agent_engine, "close"):
             await self.agent_engine.close()  # Ensure agent resources are also closed
         logger.info("ServiceContext closed.")
@@ -265,6 +302,11 @@ class ServiceContext:
         tool_adapter: ToolAdapter | None = None,
         send_text: Callable = None,
         client_uid: str = None,
+        # ✅ 单用户优化：允许传入已有的MCP组件
+        mcp_client: MCPClient | None = None,
+        tool_manager: ToolManager | None = None,
+        tool_executor: ToolExecutor | None = None,
+        mcp_prompt: str = "",
     ) -> None:
         """
         Load the ServiceContext with the reference of the provided instances.
@@ -289,8 +331,23 @@ class ServiceContext:
         self.send_text = send_text
         self.client_uid = client_uid
 
-        # Initialize session-specific MCP components
-        await self._init_mcp_components(self.character_config.agent_config.agent_settings.basic_memory_agent.use_mcpp, self.character_config.agent_config.agent_settings.basic_memory_agent.mcp_enabled_servers)
+        # ✅ 单用户优化：复用MCP组件，避免重复创建导致agent引用失效
+        if mcp_client and tool_manager and tool_executor:
+            logger.info(f"♻️  复用现有MCP组件 for client {client_uid}")
+            self.mcp_client = mcp_client
+            self.tool_manager = tool_manager
+            self.tool_executor = tool_executor
+            self.mcp_prompt = mcp_prompt
+            # 只更新client_uid（用于WebSocket通信）
+            if hasattr(self.mcp_client, '_client_uid'):
+                self.mcp_client._client_uid = client_uid
+        else:
+            # 首次连接时才初始化MCP组件
+            logger.info(f"🔧 初始化新的MCP组件 for client {client_uid}")
+            await self._init_mcp_components(
+                self.character_config.agent_config.agent_settings.basic_memory_agent.use_mcpp,
+                self.character_config.agent_config.agent_settings.basic_memory_agent.mcp_enabled_servers
+            )
 
         logger.debug(f"Loaded service context with cache: {character_config}")
 

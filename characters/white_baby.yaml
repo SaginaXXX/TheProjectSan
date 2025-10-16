@@ -3,5 +3,6 @@ character_config:
   conf_uid: 'white_baby_001'
   live2d_model_name: 'white_baby'
   character_name: 'WhiteBaby'
+  kScale: 0.8
   avatar: ''
 
