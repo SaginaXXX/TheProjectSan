@@ -1,0 +1,39 @@
+{
+  "topic_id": "topic_6a3a9453",
+  "name": "夏日忍者酒店",
+  "description": "忍者龙剑传4！！！！！",
+  "language": "zh",
+  "images": [
+    {
+      "id": "img_7a264823",
+      "filename": "img_7a264823.jpg",
+      "url_path": "/topics/client_001/topic_6a3a9453/images/img_7a264823.jpg",
+      "description": "可爱",
+      "size_bytes": 12434,
+      "size_mb": 0.01,
+      "format": ".jpg"
+    },
+    {
+      "id": "img_9b554a02",
+      "filename": "img_9b554a02.jpeg",
+      "url_path": "/topics/client_001/topic_6a3a9453/images/img_9b554a02.jpeg",
+      "description": "忍者",
+      "size_bytes": 24188,
+      "size_mb": 0.02,
+      "format": ".jpeg"
+    }
+  ],
+  "videos": [
+    {
+      "id": "vid_1b1f8367",
+      "filename": "vid_1b1f8367.mp4",
+      "url_path": "/topics/client_001/topic_6a3a9453/videos/vid_1b1f8367.mp4",
+      "description": "嗯嗯",
+      "size_bytes": 1498329,
+      "size_mb": 1.43,
+      "format": ".mp4"
+    }
+  ],
+  "created_at": "2025-11-16T13:00:37.938276",
+  "updated_at": "2025-11-16T13:00:43.950316"
+}

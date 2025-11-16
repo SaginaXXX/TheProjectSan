@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web控制面板诊断工具</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+    </style>
+</head>
+<body>
+    <h1>Web控制面板诊断工具</h1>
+    
+    <div class="test-section">
+        <h2>1. 服务器连接测试</h2>
+        <button onclick="testServerConnection()">测试服务器连接</button>
+        <div id="server-result" class="result" style="display:none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. CLIENT_ID测试</h2>
+        <input type="text" id="test-client-id" value="client_001" style="padding: 8px; width: 200px;">
+        <button onclick="testClientId()">测试CLIENT_ID</button>
+        <div id="client-result" class="result" style="display:none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 媒体列表API测试</h2>
+        <button onclick="testMediaList()">获取媒体列表</button>
+        <div id="media-result" class="result" style="display:none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 设置加载API测试</h2>
+        <button onclick="testLoadSettings()">加载设置</button>
+        <div id="load-result" class="result" style="display:none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. 设置保存API测试</h2>
+        <button onclick="testSaveSettings()">保存测试设置</button>
+        <div id="save-result" class="result" style="display:none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>6. 浏览器控制台日志</h2>
+        <p>请打开浏览器开发者工具（F12），查看Console标签页中的错误信息</p>
+    </div>
+
+    <script>
+        const currentClientId = new URLSearchParams(window.location.search).get('client') || 'client_001';
+        
+        function showResult(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result ' + (isError ? 'error' : 'success');
+            element.textContent = message;
+        }
+        
+        async function testServerConnection() {
+            try {
+                const response = await fetch('/api/debug/paths');
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('server-result', `✅ 服务器连接正常\n\n服务器信息:\n${JSON.stringify(data, null, 2)}`);
+                } else {
+                    showResult('server-result', `❌ 服务器响应错误: ${response.status} ${response.statusText}`, true);
+                }
+            } catch (error) {
+                showResult('server-result', `❌ 服务器连接失败: ${error.message}\n\n请确保:\n1. 后端服务器正在运行\n2. 端口12393可访问\n3. 没有防火墙阻止`, true);
+            }
+        }
+        
+        async function testClientId() {
+            const clientId = document.getElementById('test-client-id').value;
+            try {
+                const response = await fetch(`/api/media/list?client=${encodeURIComponent(clientId)}&category=ads`);
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('client-result', `✅ CLIENT_ID有效: ${clientId}\n\n返回数据:\n${JSON.stringify(data, null, 2)}`);
+                } else {
+                    showResult('client-result', `❌ API错误: ${response.status}\n${await response.text()}`, true);
+                }
+            } catch (error) {
+                showResult('client-result', `❌ 请求失败: ${error.message}`, true);
+            }
+        }
+        
+        async function testMediaList() {
+            try {
+                const response = await fetch(`/api/media/list?client=${currentClientId}&category=ads`);
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('media-result', `✅ 媒体列表获取成功\n\nCLIENT_ID: ${currentClientId}\n文件数量: ${data.total_count}\n\n详细数据:\n${JSON.stringify(data, null, 2)}`);
+                } else {
+                    showResult('media-result', `❌ API错误: ${response.status}\n${await response.text()}`, true);
+                }
+            } catch (error) {
+                showResult('media-result', `❌ 请求失败: ${error.message}`, true);
+            }
+        }
+        
+        async function testLoadSettings() {
+            try {
+                const response = await fetch(`/api/settings/load?client=${currentClientId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('load-result', `✅ 设置加载成功\n\n${JSON.stringify(data, null, 2)}`);
+                } else {
+                    const errorText = await response.text();
+                    showResult('load-result', `❌ 加载失败: ${response.status}\n\n${errorText}`, true);
+                }
+            } catch (error) {
+                showResult('load-result', `❌ 请求失败: ${error.message}`, true);
+            }
+        }
+        
+        async function testSaveSettings() {
+            try {
+                const testSettings = {
+                    allow_proactive_speak: true,
+                    idle_seconds_to_speak: 10
+                };
+                
+                const response = await fetch('/api/settings/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        settings_data: testSettings,
+                        client: currentClientId
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('save-result', `✅ 设置保存成功\n\n请求数据:\n${JSON.stringify(testSettings, null, 2)}\n\n响应数据:\n${JSON.stringify(data, null, 2)}`);
+                } else {
+                    const errorText = await response.text();
+                    showResult('save-result', `❌ 保存失败: ${response.status}\n\n错误信息:\n${errorText}`, true);
+                }
+            } catch (error) {
+                showResult('save-result', `❌ 请求失败: ${error.message}\n\n详细信息:\n${error.stack}`, true);
+            }
+        }
+        
+        // 页面加载时显示当前CLIENT_ID
+        document.getElementById('test-client-id').value = currentClientId;
+        console.log('诊断工具已加载，当前CLIENT_ID:', currentClientId);
+    </script>
+</body>
+</html>
+

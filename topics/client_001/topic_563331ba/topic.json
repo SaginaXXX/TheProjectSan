@@ -1,0 +1,20 @@
+{
+  "topic_id": "topic_563331ba",
+  "name": "涩谷二次元主题",
+  "description": "超绝可爱魔法少女",
+  "language": "zh",
+  "images": [
+    {
+      "id": "img_47383bee",
+      "filename": "img_47383bee.jpeg",
+      "url_path": "/topics/client_001/topic_563331ba/images/img_47383bee.jpeg",
+      "description": "魔法少女晓美焰！",
+      "size_bytes": 24188,
+      "size_mb": 0.02,
+      "format": ".jpeg"
+    }
+  ],
+  "videos": [],
+  "created_at": "2025-11-16T01:31:09.606537",
+  "updated_at": "2025-11-16T01:31:27.431638"
+}

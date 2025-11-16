@@ -269,6 +269,56 @@ class WebSocketHandler:
             if msg_type != "frontend-playback-complete":
                 logger.warning(f"Unknown message type: {msg_type}")
 
+    async def broadcast_to_all(self, message: dict) -> None:
+        """
+        广播消息到所有连接的客户端（通用方法）
+        
+        性能保证：
+        - 复用现有client_connections字典（零新建对象）
+        - 异步非阻塞发送
+        - 静默失败，不影响其他客户端
+        
+        Args:
+            message: 要广播的消息字典
+        """
+        logger.info(f"🔍 broadcast_to_all 被调用，消息类型: {message.get('type')}")
+        logger.info(f"🔍 当前连接数: {len(self.client_connections)}")
+        
+        if not self.client_connections:
+            logger.warning(f"⚠️ 没有WebSocket连接，无法广播消息")
+            return  # 无连接时直接返回
+        
+        message_str = json.dumps(message)
+        
+        # 遍历现有连接（不创建新列表，直接遍历.items()）
+        for client_uid, ws in self.client_connections.items():
+            try:
+                await ws.send_text(message_str)
+                logger.info(f"📡 已向客户端 {client_uid} 广播消息: {message.get('type')}")
+            except Exception as e:
+                # 静默失败，不影响其他客户端
+                logger.warning(f"⚠️ 向客户端 {client_uid} 广播失败: {e}")
+    
+    async def broadcast_settings_update(self, settings_data: dict, applied_keys: list) -> None:
+        """
+        广播配置更新到所有连接的客户端
+        
+        性能保证：
+        - 复用现有client_connections字典（零新建对象）
+        - 异步非阻塞发送
+        - 静默失败，不影响其他客户端
+        
+        Args:
+            settings_data: 更新的设置数据
+            applied_keys: 已应用的设置键列表
+        """
+        message = {
+            "type": "settings-updated",
+            "settings": settings_data,
+            "applied_keys": applied_keys
+        }
+        await self.broadcast_to_all(message)
+    
     async def handle_disconnect(self, client_uid: str) -> None:
         """Handle client disconnection - 彻底清理所有资源防止泄漏"""
         logger.info(f"🔌 开始清理客户端 {client_uid} 的资源...")

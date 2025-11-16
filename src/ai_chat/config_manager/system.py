@@ -7,14 +7,32 @@ from .i18n import I18nMixin, Description
 class MediaServerConfig(I18nMixin):
     """媒体服务器配置"""
     host: str = Field("127.0.0.1", alias="host")
-    port: int = Field(12393, alias="port") 
+    port: int = Field(12393, alias="port")
+    
+    # ✅ 多租户配置
+    client_id: str = Field("default_client", alias="client_id")
+    storage_type: str = Field("local", alias="storage_type")  # "local" 或 "s3"
+    
+    # 本地存储配置
     ads_directory: str = Field("ads", alias="ads_directory")
     videos_directory: str = Field("videos", alias="videos_directory")
     use_absolute_paths: bool = Field(False, alias="use_absolute_paths")
     base_directory: Optional[str] = Field(None, alias="base_directory")
     
+    # S3存储配置（可选，storage_type=s3时使用）
+    s3_bucket: Optional[str] = Field(None, alias="s3_bucket")
+    s3_region: Optional[str] = Field("us-east-1", alias="s3_region")
+    s3_access_key: Optional[str] = Field(None, alias="s3_access_key")
+    s3_secret_key: Optional[str] = Field(None, alias="s3_secret_key")
+    cdn_url: Optional[str] = Field(None, alias="cdn_url")
+    
+    # 缓存配置
+    cache_enabled: bool = Field(True, alias="cache_enabled")
+    cache_dir: str = Field("cache", alias="cache_dir")
+    cache_size_limit: str = Field("10GB", alias="cache_size_limit")
+    
     def get_directory_path(self, directory_type: str) -> Path:
-        """获取指定类型目录的路径"""
+        """获取指定类型目录的路径（本地存储模式）"""
         if directory_type == 'ads':
             directory = self.ads_directory
         elif directory_type == 'videos':
@@ -34,9 +52,45 @@ class MediaServerConfig(I18nMixin):
         
         return path.resolve()
     
+    def get_client_storage_path(self, category: str, filename: str) -> str:
+        """
+        获取客户的存储路径（支持多租户隔离）
+        
+        Args:
+            category: 分类 (ads/agent)
+            filename: 文件名
+            
+        Returns:
+            存储路径（本地路径或S3 key）
+        """
+        if self.storage_type == "s3":
+            # S3路径: client_001/ads/video.mp4
+            return f"{self.client_id}/{category}/{filename}"
+        else:
+            # 本地路径: ads/client_001/video.mp4
+            return f"{category}/{self.client_id}/{filename}"
+    
+    def get_resource_url(self, category: str, filename: str) -> str:
+        """
+        生成资源访问URL
+        
+        Args:
+            category: 分类 (ads/agent)
+            filename: 文件名
+            
+        Returns:
+            资源访问URL
+        """
+        if self.storage_type == "s3" and self.cdn_url:
+            # CDN URL
+            return f"{self.cdn_url}/{self.client_id}/{category}/{filename}"
+        else:
+            # 本地URL
+            return f"http://{self.host}:{self.port}/{category}/{self.client_id}/{filename}"
+    
     def get_video_url(self, category: str, filename: str) -> str:
-        """生成视频文件的URL"""
-        return f"http://{self.host}:{self.port}/{category}/{filename}"
+        """生成视频文件的URL（兼容旧接口）"""
+        return self.get_resource_url(category, filename)
 
 
 class SystemConfig(I18nMixin):

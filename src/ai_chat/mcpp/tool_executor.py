@@ -1,4 +1,5 @@
 import json
+import re
 import datetime
 from loguru import logger
 from typing import (
@@ -223,6 +224,126 @@ class ToolExecutor:
             status_content = text_content # Default to text content
             llm_formatted_content = text_content # Default to text content for LLM
 
+            # ✅ 特殊处理：主题工具 - 格式化输出给AI
+            if tool_name in ["get_topic_image", "get_topic_video", "get_topic_info"] and text_content:
+                try:
+                    parsed_result = json.loads(text_content)
+                    if isinstance(parsed_result, dict):
+                        if tool_name == "get_topic_info":
+                            # 处理get_topic_info：构建友好的文本描述，不包含URL
+                            topic_name = parsed_result.get("name", "")
+                            description = parsed_result.get("description", "")
+                            images_info = parsed_result.get("images", {})
+                            videos_info = parsed_result.get("videos", {})
+                            
+                            # 构建基础信息
+                            info_parts = []
+                            if topic_name:
+                                info_parts.append(f"主题名称：{topic_name}")
+                            if description:
+                                info_parts.append(f"描述：{description}")
+                            
+                            # 添加图片/视频提示
+                            if isinstance(images_info, dict) and images_info.get("count", 0) > 0:
+                                info_parts.append(images_info.get("hint", ""))
+                            if isinstance(videos_info, dict) and videos_info.get("count", 0) > 0:
+                                info_parts.append(videos_info.get("hint", ""))
+                            
+                            llm_formatted_content = "\n".join(info_parts) if info_parts else text_content
+                            logger.info(f"✅ get_topic_info结果已处理：AI将看到友好提示，不包含URL")
+                            
+                        elif tool_name in ["get_topic_image", "get_topic_video"]:
+                            # 处理get_topic_image/get_topic_video：只提取描述给AI，不包含URL
+                            description = parsed_result.get("description", "")
+                            topic_name = parsed_result.get("topic_name", "")
+                            content_type = parsed_result.get("type", "")  # "image" or "video"
+                            has_more = parsed_result.get("has_more", False)
+                            hint = parsed_result.get("hint", "")
+                            image_index = parsed_result.get("image_index")
+                            video_index = parsed_result.get("video_index")
+                            total_images = parsed_result.get("total_images")
+                            total_videos = parsed_result.get("total_videos")
+                            
+                            # 构建只包含描述的文本（不包含URL）
+                            content_parts = []
+                            if content_type == "image":
+                                if topic_name and description:
+                                    content_parts.append(f"{topic_name}的图片：{description}")
+                                elif description:
+                                    content_parts.append(f"图片：{description}")
+                                else:
+                                    content_parts.append("图片已找到")
+                                
+                                # 添加索引信息（如果有）
+                                if image_index is not None and total_images is not None:
+                                    content_parts.append(f"（第{image_index + 1}/{total_images}张）")
+                                
+                                # 如果有更多图片，添加提示
+                                if has_more and hint:
+                                    content_parts.append(f"提示：{hint}")
+                            elif content_type == "video":
+                                if topic_name and description:
+                                    content_parts.append(f"{topic_name}的视频：{description}")
+                                elif description:
+                                    content_parts.append(f"视频：{description}")
+                                else:
+                                    content_parts.append("视频已找到")
+                                
+                                # 添加索引信息（如果有）
+                                if video_index is not None and total_videos is not None:
+                                    content_parts.append(f"（第{video_index + 1}/{total_videos}个）")
+                                
+                                # 如果有更多视频，添加提示
+                                if has_more and hint:
+                                    content_parts.append(f"提示：{hint}")
+                            
+                            llm_formatted_content = " ".join(content_parts)
+                            
+                            # status_content保持原样（包含完整JSON，用于前端显示）
+                            logger.info(f"✅ 主题工具结果已处理：AI将看到描述和提示，不包含URL")
+                except (json.JSONDecodeError, Exception) as e:
+                    # 如果不是JSON或解析失败，也要过滤URL
+                    logger.warning(f"主题工具结果解析失败，尝试从原始内容中过滤URL: {e}")
+                    # 即使解析失败，也要确保不包含URL
+                    if text_content:
+                        # 尝试移除可能的URL模式
+                        # 移除http://或https://开头的URL
+                        filtered_content = re.sub(r'https?://[^\s\)\]\>]+', '[URL已隐藏]', text_content)
+                        # 如果过滤后内容为空或只包含URL，使用默认消息
+                        if filtered_content.strip() and filtered_content != '[URL已隐藏]':
+                            llm_formatted_content = filtered_content
+                        else:
+                            # 如果原始内容主要是URL，使用安全的消息
+                            if tool_name == "get_topic_image":
+                                llm_formatted_content = "图片已找到，请介绍图片内容"
+                            elif tool_name == "get_topic_video":
+                                llm_formatted_content = "视频已找到，请介绍视频内容"
+                            else:
+                                llm_formatted_content = "内容已找到"
+                    else:
+                        llm_formatted_content = "内容已找到"
+                    logger.info(f"✅ 主题工具结果已安全处理（解析失败但已过滤URL）")
+            
+            # 额外的安全检查：确保llm_formatted_content不包含URL（双重防护）
+            if tool_name in ["get_topic_image", "get_topic_video"] and llm_formatted_content:
+                # 检查是否包含URL模式（包括各种可能的URL格式）
+                url_patterns = [
+                    r'https?://[^\s\)\]\>]+',  # http://或https://开头的URL
+                    r'www\.[^\s\)\]\>]+',     # www.开头的URL
+                    r'[a-zA-Z0-9-]+\.[a-zA-Z]{2,}[^\s\)\]\>]*',  # 域名模式
+                ]
+                for pattern in url_patterns:
+                    if re.search(pattern, llm_formatted_content):
+                        logger.warning(f"⚠️ 检测到URL泄露风险，强制过滤: {tool_name}, 模式: {pattern}")
+                        # 移除所有URL
+                        llm_formatted_content = re.sub(pattern, '[URL已隐藏]', llm_formatted_content)
+                # 如果内容主要是URL，使用默认消息
+                if llm_formatted_content.strip() == '[URL已隐藏]' or not llm_formatted_content.strip() or '[URL已隐藏]' in llm_formatted_content:
+                    if tool_name == "get_topic_image":
+                        llm_formatted_content = "图片已找到，请介绍图片内容"
+                    elif tool_name == "get_topic_video":
+                        llm_formatted_content = "视频已找到，请介绍视频内容"
+
             has_image = False
             if content_items:
                 image_items = [item for item in content_items if item.get('type') == 'image']
@@ -234,8 +355,8 @@ class ToolExecutor:
                     if caller_mode == "Claude":
                         # Format for Claude: list of blocks
                         claude_blocks = []
-                        if text_content:
-                            claude_blocks.append({"type": "text", "text": text_content})
+                        if llm_formatted_content:  # 使用处理后的内容
+                            claude_blocks.append({"type": "text", "text": llm_formatted_content})
                         for item in content_items:
                              if item.get('type') == 'image' and 'data' in item and 'mimeType' in item:
                                  claude_blocks.append({
@@ -249,7 +370,8 @@ class ToolExecutor:
                              # Add other non-text types here
                         llm_formatted_content = claude_blocks if claude_blocks else "" # Use blocks or empty string
                     elif caller_mode in ["OpenAI", "Prompt"]:
-                        llm_formatted_content = status_content
+                        # llm_formatted_content已经在上面处理过了
+                        pass
 
             # Prepare and yield tool call status update
             status_update = {

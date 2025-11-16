@@ -99,11 +99,17 @@ class WebSocketServer:
 
         # Include routes, passing the context instance
         # The context will be populated during the initialize step
-        self.app.include_router(
-            init_client_ws_route(default_context_cache=self.default_context_cache),
+        client_ws_router, self.websocket_handler = init_client_ws_route(
+            default_context_cache=self.default_context_cache
         )
+        self.app.include_router(client_ws_router)
+        
+        # Pass websocket_handler to webtool routes for broadcasting
         self.app.include_router(
-            init_webtool_routes(default_context_cache=self.default_context_cache),
+            init_webtool_routes(
+                default_context_cache=self.default_context_cache,
+                websocket_handler=self.websocket_handler
+            ),
         )
 
         # Lightweight health endpoints (avoid heavy initialization on request)
@@ -166,6 +172,15 @@ class WebSocketServer:
             "/ads",
             CORSStaticFiles(directory="ads"),
             name="advertisements",
+        )
+        
+        # Mount topics directory for topic introduction content
+        if not os.path.exists("topics"):
+            os.makedirs("topics")
+        self.app.mount(
+            "/topics",
+            CORSStaticFiles(directory="topics"),
+            name="topics",
         )
 
         # Mount web tool directory separately from frontend

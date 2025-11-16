@@ -1,0 +1,30 @@
+{
+  "topic_id": "topic_59b025d8",
+  "name": "喜欢你",
+  "description": "特别喜欢你",
+  "language": "zh",
+  "images": [
+    {
+      "id": "img_a742c763",
+      "filename": "img_a742c763.jpg",
+      "url_path": "/topics/client_001/topic_59b025d8/images/img_a742c763.jpg",
+      "description": "外观",
+      "size_bytes": 12434,
+      "size_mb": 0.01,
+      "format": ".jpg"
+    }
+  ],
+  "videos": [
+    {
+      "id": "vid_43a0a2e9",
+      "filename": "vid_43a0a2e9.mp4",
+      "url_path": "/topics/client_001/topic_59b025d8/videos/vid_43a0a2e9.mp4",
+      "description": "天才",
+      "size_bytes": 1063061,
+      "size_mb": 1.01,
+      "format": ".mp4"
+    }
+  ],
+  "created_at": "2025-11-16T12:44:01.621754",
+  "updated_at": "2025-11-16T12:44:27.506824"
+}
