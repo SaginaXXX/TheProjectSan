@@ -18,6 +18,14 @@ from loguru import logger
 from ..service_context import ServiceContext
 from ..websocket_handler import WebSocketHandler
 
+# 尝试导入 qrcode（模块级别，避免每次调用都导入）
+try:
+    import qrcode
+    QRCODE_AVAILABLE = True
+except ImportError:
+    QRCODE_AVAILABLE = False
+    qrcode = None
+
 
 def register_utility_routes(
     router: APIRouter,
@@ -105,9 +113,17 @@ def register_utility_routes(
         Returns:
             base64编码的二维码图片
         """
+        # 检查 qrcode 库是否可用
+        if not QRCODE_AVAILABLE:
+            return Response(
+                content=json.dumps({
+                    "error": "qrcode library not installed. Install with: pip install qrcode[pil]"
+                }),
+                status_code=500,
+                media_type="application/json"
+            )
+        
         try:
-            import qrcode
-            
             # 获取客户ID
             container_client_id = os.getenv('CLIENT_ID', 'default_client')
             client_id = client or container_client_id
@@ -152,7 +168,7 @@ def register_utility_routes(
                 # 本地测试模式（使用HTTP）
                 control_panel_url = f"http://{local_host}/web-tool/control-panel.html?client={client_id}"
             
-            # 生成二维码
+            # 生成二维码（使用上下文管理器确保资源正确释放）
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -162,13 +178,22 @@ def register_utility_routes(
             qr.add_data(control_panel_url)
             qr.make(fit=True)
             
-            # 创建图片
-            img = qr.make_image(fill_color="black", back_color="white")
-            
-            # 转换为base64
-            buffer = BytesIO()
-            img.save(buffer, format='PNG')
-            img_base64 = base64.b64encode(buffer.getvalue()).decode()
+            # 创建图片并转换为base64（确保资源正确释放）
+            img = None
+            try:
+                img = qr.make_image(fill_color="black", back_color="white")
+                buffer = BytesIO()
+                img.save(buffer, format='PNG')
+                buffer.seek(0)  # 重置指针到开头
+                img_base64 = base64.b64encode(buffer.getvalue()).decode()
+                # BytesIO 会在函数结束时自动释放，无需显式关闭
+            finally:
+                # 显式关闭图片对象以释放内存（PIL 图片对象占用内存）
+                if img is not None and hasattr(img, 'close'):
+                    try:
+                        img.close()
+                    except Exception:
+                        pass  # 忽略关闭时的错误
             
             return {
                 "status": "success",
@@ -180,14 +205,6 @@ def register_utility_routes(
                 "domain_type": "独立域名" if domain else ("路径前缀" if client_path else "共享域名")
             }
             
-        except ImportError:
-            return Response(
-                content=json.dumps({
-                    "error": "qrcode library not installed. Install with: pip install qrcode[pil]"
-                }),
-                status_code=500,
-                media_type="application/json"
-            )
         except Exception as e:
             logger.error(f"Error generating QR code: {e}")
             return Response(
