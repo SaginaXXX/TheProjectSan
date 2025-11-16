@@ -112,14 +112,18 @@ def register_utility_routes(
             container_client_id = os.getenv('CLIENT_ID', 'default_client')
             client_id = client or container_client_id
             
-            # 获取域名配置（优先级：环境变量 > 请求头 > 配置）
+            # 获取域名配置（优先级：环境变量 > X-Forwarded-Host > Host 请求头 > 配置）
             domain = os.getenv('DOMAIN')  # 独立域名（如 screen1.example.com）
             shared_domain = os.getenv('SHARED_DOMAIN')  # 共享域名（如 ads.xyz）
             client_path = os.getenv('CLIENT_PATH')  # 路径前缀（如 client1）
             
             # 从请求头获取域名（如果环境变量未设置）
             if not domain and not shared_domain:
-                host_header = request.headers.get('Host', '')
+                # 优先使用 X-Forwarded-Host（反向代理常用）
+                host_header = request.headers.get('X-Forwarded-Host', '')
+                # 如果没有 X-Forwarded-Host，使用 Host 头部
+                if not host_header:
+                    host_header = request.headers.get('Host', '')
                 # 移除端口号（如果有）
                 if ':' in host_header:
                     host_header = host_header.split(':')[0]
