@@ -1,0 +1,7 @@
+character_config:
+  conf_name: 'suitwoman'
+  conf_uid: 'suitwoman_001'
+  live2d_model_name: 'suitwoman'
+  character_name: 'SuitWoman'
+  avatar: 'suitwoman.jpg'
+

@@ -190,12 +190,14 @@ class WebSocketServer:
             name="web_tool",
         )
 
-        # Mount main frontend last (as catch-all)
-        self.app.mount(
-            "/",
-            CORSStaticFiles(directory="frontend", html=True),
-            name="frontend",
-        )
+        # Note: Frontend is now served separately via Docker (frontend container)
+        # Do not mount frontend here as it would intercept all routes including /client-ws
+        # If you need to serve frontend from backend in development, uncomment below:
+        # self.app.mount(
+        #     "/",
+        #     CORSStaticFiles(directory="frontend", html=True),
+        #     name="frontend",
+        # )
 
     async def initialize(self):
         """Asynchronously load the service context from config.
