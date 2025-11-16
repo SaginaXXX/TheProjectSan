@@ -1,0 +1,56 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "suitwoman.moc3",
+		"Textures": [
+			"textures/texture_00.png"
+		],
+		"Physics": "suitwoman.physics3.json",
+		"DisplayInfo": "suitwoman.cdi3.json",
+		"Expressions": [
+			{
+				"Name": "egao",
+				"File": "expressions/egao.exp3.json"
+			},
+			{
+				"Name": "hidariudeannai",
+				"File": "expressions/hidariudeannai.exp3.json"
+			},
+			{
+				"Name": "hidariudesijibou",
+				"File": "expressions/hidariudesijibou.exp3.json"
+			},
+			{
+				"Name": "migiudeannai",
+				"File": "expressions/migiudeannai.exp3.json"
+			},
+			{
+				"Name": "migiudesijibou",
+				"File": "expressions/migiudesijibou.exp3.json"
+			}
+		],
+		"Motions": {
+			"": [
+				{
+					"File": "motions/buyhidari.motion3.json"
+				},
+				{
+					"File": "motions/buymigi.motion3.json"
+				}
+			]
+		}
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		},
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": []
+		}
+	],
+	"HitAreas": []
+}

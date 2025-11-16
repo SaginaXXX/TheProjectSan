@@ -11,7 +11,7 @@ from datetime import datetime
 from uuid import uuid4
 from typing import Optional
 from io import BytesIO
-from fastapi import APIRouter, WebSocket, Response
+from fastapi import APIRouter, WebSocket, Response, Request
 from starlette.responses import JSONResponse
 from starlette.websockets import WebSocketDisconnect
 from loguru import logger
@@ -89,11 +89,16 @@ def register_utility_routes(
         )
 
     @router.get("/api/qrcode/upload")
-    async def get_upload_qrcode(client: Optional[str] = None, category: str = "ads"):
+    async def get_upload_qrcode(
+        request: Request,
+        client: Optional[str] = None, 
+        category: str = "ads"
+    ):
         """
         生成上传二维码（供控制面板使用）
         
         Args:
+            request: FastAPI 请求对象（用于获取域名）
             client: 客户ID (可选，默认从环境变量读取)
             category: 分类 (ads/agent)
         
@@ -107,10 +112,20 @@ def register_utility_routes(
             container_client_id = os.getenv('CLIENT_ID', 'default_client')
             client_id = client or container_client_id
             
-            # 获取域名配置
+            # 获取域名配置（优先级：环境变量 > 请求头 > 配置）
             domain = os.getenv('DOMAIN')  # 独立域名（如 screen1.example.com）
             shared_domain = os.getenv('SHARED_DOMAIN')  # 共享域名（如 ads.xyz）
             client_path = os.getenv('CLIENT_PATH')  # 路径前缀（如 client1）
+            
+            # 从请求头获取域名（如果环境变量未设置）
+            if not domain and not shared_domain:
+                host_header = request.headers.get('Host', '')
+                # 移除端口号（如果有）
+                if ':' in host_header:
+                    host_header = host_header.split(':')[0]
+                # 如果 Host 头部不是 localhost 或 127.0.0.1，使用它作为域名
+                if host_header and host_header not in ['localhost', '127.0.0.1', '']:
+                    domain = host_header
             
             # 获取host:port用于本地测试
             media_config = default_context_cache.config.system_config.media_server
@@ -119,13 +134,16 @@ def register_utility_routes(
             # 生成Web控制面板URL
             if domain and domain not in ['localhost', '127.0.0.1'] and ':' not in domain:
                 # 独立域名模式（生产环境）
-                control_panel_url = f"https://{domain}/web-tool/control-panel.html?client={client_id}"
+                # 判断是否使用 HTTPS（通过 X-Forwarded-Proto 或请求 scheme）
+                scheme = 'https' if request.headers.get('X-Forwarded-Proto') == 'https' or str(request.url.scheme) == 'https' else 'http'
+                control_panel_url = f"{scheme}://{domain}/web-tool/control-panel.html?client={client_id}"
             elif shared_domain and shared_domain not in ['localhost', '127.0.0.1'] and ':' not in shared_domain:
                 # 共享域名模式（生产环境）
+                scheme = 'https' if request.headers.get('X-Forwarded-Proto') == 'https' or str(request.url.scheme) == 'https' else 'http'
                 if client_path:
-                    control_panel_url = f"https://{shared_domain}/{client_path}/web-tool/control-panel.html?client={client_id}"
+                    control_panel_url = f"{scheme}://{shared_domain}/{client_path}/web-tool/control-panel.html?client={client_id}"
                 else:
-                    control_panel_url = f"https://{shared_domain}/web-tool/control-panel.html?client={client_id}"
+                    control_panel_url = f"{scheme}://{shared_domain}/web-tool/control-panel.html?client={client_id}"
             else:
                 # 本地测试模式（使用HTTP）
                 control_panel_url = f"http://{local_host}/web-tool/control-panel.html?client={client_id}"
