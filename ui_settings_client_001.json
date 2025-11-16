@@ -1,0 +1,13 @@
+{
+  "subtitle_enabled": false,
+  "subtitle_bg_color": "#000000",
+  "subtitle_bg_opacity": 0.8,
+  "subtitle_text_color": "#49323d",
+  "subtitle_padding_x": 14,
+  "subtitle_padding_y": 10,
+  "subtitle_border_radius": 14,
+  "subtitle_blur": 0,
+  "language": "zh",
+  "use_camera_background": false,
+  "show_subtitle": false
+}

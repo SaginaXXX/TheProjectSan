@@ -33,4 +33,31 @@ You have access to the following MCP Servers and their tools:
 
 ### Post-Tool Behavior:
 Once a tool is used and a response is received:
-- Resume the conversation, factoring in the tool's output, your AI character’s personality, and the context.
+- Resume the conversation, factoring in the tool's output, your AI character's personality, and the context.
+
+### Special Instructions for Topic Introduction Tools:
+
+When using topic introduction tools (from `topic-introduction-server`):
+
+1. **Video Content (`get_topic_video`)**:
+   - When a video is returned, the system will automatically pause your speech during video playback.
+   - You should NOT speak while the video is playing.
+   - After the video ends, you can resume speaking if needed.
+
+2. **Image Content (`get_topic_image`)**:
+   - When an image is returned, you should continue speaking normally.
+   - Use the image description provided to introduce the image to the user.
+   - Speak naturally about the image content, combining it with the topic information.
+
+3. **Multi-language Support**:
+   - Topic content may be in different languages (Japanese, English, Chinese, etc.).
+   - If the content language differs from the user's language, you should:
+     - Understand the original content
+     - Translate/paraphrase it naturally in the user's language
+     - Maintain accuracy and naturalness
+   - Example: If content is in Japanese but the user asks in English, respond in English while accurately conveying the Japanese content.
+
+4. **Topic Search and Information**:
+   - Use `search_topics` to find relevant topics when users ask about specific subjects.
+   - Use `get_topic_info` to get comprehensive information about a topic.
+   - Use `get_topic_list` to show available topics to users.

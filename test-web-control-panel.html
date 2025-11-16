@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web控制面板功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #4f46e5;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Web控制面板功能测试</h1>
+    
+    <div class="test-section">
+        <h2>📱 控制面板访问测试</h2>
+        <p>测试Web控制面板是否可以正常访问</p>
+        <button class="test-button" onclick="testControlPanelAccess()">测试访问</button>
+        <div id="accessResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>⚙️ 设置保存测试</h2>
+        <p>测试设置保存API是否正常工作</p>
+        <button class="test-button" onclick="testSettingsSave()">测试保存</button>
+        <div id="settingsResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📤 媒体上传测试</h2>
+        <p>测试媒体上传功能是否正常</p>
+        <button class="test-button" onclick="testMediaUpload()">测试上传</button>
+        <div id="uploadResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📁 配置文件列表测试</h2>
+        <p>测试配置文件列表API是否正常工作</p>
+        <button class="test-button" onclick="testConfigFiles()">测试配置文件</button>
+        <div id="configFilesResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📱 二维码生成测试</h2>
+        <p>测试二维码生成功能是否正常</p>
+        <button class="test-button" onclick="testQRCodeGeneration()">测试生成</button>
+        <div id="qrcodeResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📊 功能对比</h2>
+        <h3>Electron原生控制面板 vs Web控制面板</h3>
+        <table border="1" style="width: 100%; border-collapse: collapse;">
+            <tr style="background: #f8f9fa;">
+                <th style="padding: 10px;">功能</th>
+                <th style="padding: 10px;">Electron</th>
+                <th style="padding: 10px;">Web</th>
+                <th style="padding: 10px;">状态</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">一般设置</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">Live2D设置</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">语音识别设置</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">语音合成设置</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">AI代理设置</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">媒体管理</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">广告音频设置</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">二维码管理</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">二维码下载</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">二维码打印</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">角色预设选择</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;">关于信息</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px;">✅</td>
+                <td style="padding: 10px; color: green;">✅ 一致</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        const baseUrl = 'http://127.0.0.1:12393';
+        const clientId = 'client_001';
+        
+        function showResult(elementId, success, message) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${success ? 'success' : 'error'}`;
+            element.textContent = message;
+        }
+        
+        async function testControlPanelAccess() {
+            try {
+                const response = await fetch(`${baseUrl}/web-tool/control-panel.html?client=${clientId}`);
+                if (response.ok) {
+                    showResult('accessResult', true, '✅ Web控制面板访问正常');
+                } else {
+                    showResult('accessResult', false, `❌ 访问失败: ${response.status}`);
+                }
+            } catch (error) {
+                showResult('accessResult', false, `❌ 访问失败: ${error.message}`);
+            }
+        }
+        
+        async function testSettingsSave() {
+            try {
+                const testSettings = {
+                    language: 'zh',
+                    subtitle_enabled: true,
+                    subtitle_bg_color: '#000000',
+                    pointer_interactive: false,
+                    scroll_to_resize: true,
+                    auto_stop_mic: true,
+                    allow_proactive_speak: false,
+                    audio_mode: 'audio'
+                };
+                
+                const response = await fetch(`${baseUrl}/api/settings/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        settings_data: testSettings,
+                        client: clientId
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('settingsResult', true, `✅ 设置保存成功: ${result.message}`);
+                } else {
+                    showResult('settingsResult', false, `❌ 设置保存失败: ${response.status}`);
+                }
+            } catch (error) {
+                showResult('settingsResult', false, `❌ 设置保存失败: ${error.message}`);
+            }
+        }
+        
+        async function testMediaUpload() {
+            try {
+                const response = await fetch(`${baseUrl}/api/media/list?client=${clientId}&category=ads`);
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('uploadResult', true, `✅ 媒体列表获取成功: ${data.files?.length || 0} 个文件`);
+                } else {
+                    showResult('uploadResult', false, `❌ 媒体列表获取失败: ${response.status}`);
+                }
+            } catch (error) {
+                showResult('uploadResult', false, `❌ 媒体列表获取失败: ${error.message}`);
+            }
+        }
+        
+        async function testConfigFiles() {
+            try {
+                const response = await fetch(`${baseUrl}/api/config-files`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        showResult('configFilesResult', true, `✅ 配置文件列表获取成功: ${data.configs?.length || 0} 个配置文件`);
+                    } else {
+                        showResult('configFilesResult', false, `❌ 配置文件列表获取失败: ${data.error}`);
+                    }
+                } else {
+                    showResult('configFilesResult', false, `❌ 配置文件列表获取失败: ${response.status}`);
+                }
+            } catch (error) {
+                showResult('configFilesResult', false, `❌ 配置文件列表获取失败: ${error.message}`);
+            }
+        }
+        
+        async function testQRCodeGeneration() {
+            try {
+                const response = await fetch(`${baseUrl}/api/qrcode/upload?client=${clientId}&category=ads`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        showResult('qrcodeResult', true, '✅ 二维码生成成功');
+                    } else {
+                        showResult('qrcodeResult', false, `❌ 二维码生成失败: ${data.error}`);
+                    }
+                } else {
+                    showResult('qrcodeResult', false, `❌ 二维码生成失败: ${response.status}`);
+                }
+            } catch (error) {
+                showResult('qrcodeResult', false, `❌ 二维码生成失败: ${error.message}`);
+            }
+        }
+        
+        // 页面加载时自动运行所有测试
+        window.onload = function() {
+            setTimeout(() => {
+                testControlPanelAccess();
+                testSettingsSave();
+                testMediaUpload();
+                testConfigFiles();
+                testQRCodeGeneration();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

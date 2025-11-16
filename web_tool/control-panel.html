@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>控制面板 - 移动端</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .client-id {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            min-height: 400px;
+        }
+        
+        .panel h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f1ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8e9ff;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 16px;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .file-list {
+            margin-top: 20px;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .file-size {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            width: auto;
+            margin: 0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .qrcode-container {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .qrcode-image {
+            max-width: 200px;
+            margin: 0 auto 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .qrcode-url {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+            margin-bottom: 16px;
+        }
+        
+        .about-content {
+            line-height: 1.6;
+        }
+        
+        .about-content h3 {
+            margin: 16px 0 8px 0;
+            color: #333;
+        }
+        
+        .about-content p {
+            margin-bottom: 12px;
+            color: #666;
+        }
+        
+        .about-content ul {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+        
+        .about-content li {
+            margin-bottom: 4px;
+            color: #666;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .range-container input[type="range"] {
+            flex: 1;
+        }
+
+        .range-value {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ 控制面板</h1>
+            <div class="client-id" id="clientId">client_001</div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="media">🎬 媒体</div>
+            <div class="tab" data-tab="general">🎭 角色设置</div>
+            <div class="tab" data-tab="asr">🎤 ASR设置</div>
+            <div class="tab" data-tab="topics">📚 主题介绍</div>
+            <div class="tab" data-tab="qrcode">📱 二维码</div>
+            <div class="tab" data-tab="about">ℹ️ 关于</div>
+        </div>
+        
+        <!-- 媒体管理面板 -->
+        <div class="panel" id="media-panel">
+            <h2>媒体管理</h2>
+            
+            <!-- 广告音频设置 -->
+            <div style="background: #f8f9ff; padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #e1e5e9;">
+                <h3 style="margin-bottom: 16px; color: #333;">广告音频设置</h3>
+                <div class="form-group">
+                    <label>音频播放模式</label>
+                    <select id="audioMode">
+                        <option value="muted">静音模式</option>
+                        <option value="audio">音频模式</option>
+                        <option value="audio_vad">音频+VAD模式</option>
+                    </select>
+                </div>
+                <div style="font-size: 14px; color: #666; margin-top: 8px;">
+                    • 静音模式：广告播放时静音<br>
+                    • 音频模式：广告播放时播放音频<br>
+                    • 音频+VAD模式：广告播放时播放音频，同时进行语音检测
+                </div>
+                <button class="btn" onclick="saveAudioSettings()" style="margin-top: 12px;">保存音频设置</button>
+            </div>
+            
+            <!-- 上传区域 -->
+            <div style="margin-bottom: 24px;">
+                <h3 style="margin-bottom: 16px; color: #333;">上传广告视频</h3>
+                <div class="upload-area" id="mediaUploadArea">
+                    <div class="upload-icon">📤</div>
+                    <div>点击或拖拽文件到此区域上传</div>
+                    <div style="font-size: 14px; color: #666; margin-top: 8px;">
+                        支持格式: MP4, AVI, MOV, WEBM<br>
+                        最大大小: 500MB
+                    </div>
+                </div>
+                <input type="file" id="mediaFileInput" accept="video/*" multiple>
+                <div id="mediaUploadStatus"></div>
+            </div>
+            
+            <!-- 文件列表 -->
+            <div>
+                <h3 style="margin-bottom: 16px; color: #333;">广告视频列表</h3>
+                <div id="mediaFileList" class="file-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>加载文件中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 角色设置面板 -->
+        <div class="panel hidden" id="general-panel">
+            <h2>角色设置</h2>
+            
+            <div style="background: #f8f9ff; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid #e1e5e9;">
+                <h3 style="margin-bottom: 16px; color: #333;">角色预设切换</h3>
+                <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+                    选择不同的角色预设来切换AI的个性和行为模式。切换后立即生效。
+                </p>
+                
+                <div class="form-group">
+                    <label>角色预设</label>
+                    <select id="characterPreset">
+                        <option value="">加载中...</option>
+                    </select>
+                </div>
+                
+                <button class="btn" onclick="saveCharacterSettings()">切换角色</button>
+            </div>
+            
+            <div style="background: #fff3cd; padding: 16px; border-radius: 8px; border: 1px solid #ffeaa7; margin-top: 20px;">
+                <h4 style="color: #856404; margin-bottom: 8px;">💡 提示</h4>
+                <p style="color: #856404; font-size: 14px; margin: 0;">
+                    其他UI设置（如字幕、语言等）请在原控制面板（按Ctrl+Space）中修改，以确保正确生效。
+                </p>
+            </div>
+        </div>
+        
+        <!-- 主题介绍面板 -->
+        <div class="panel hidden" id="topics-panel">
+            <h2>主题介绍管理</h2>
+            
+            <!-- 主题列表 -->
+            <div style="margin-bottom: 24px;">
+                <h3 style="margin-bottom: 16px; color: #333;">主题列表</h3>
+                <div id="topicsList" class="file-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>加载主题中...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 新建/编辑主题表单 -->
+            <div style="background: #f8f9ff; padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #e1e5e9;">
+                <h3 style="margin-bottom: 16px; color: #333;" id="topicFormTitle">新建主题</h3>
+                
+                <input type="hidden" id="editingTopicId" value="">
+                
+                <!-- 主题名称 -->
+                <div class="form-group">
+                    <label>主题名称</label>
+                    <input type="text" id="topicName" placeholder="主题名称（如：兽耳夏日酒店）" style="width: 100%;">
+                </div>
+                
+                <!-- 整体描述 -->
+                <div class="form-group">
+                    <label>整体描述</label>
+                    <textarea id="topicDescription" rows="4" placeholder="主题描述（如：夏のホテル紹介...）" style="width: 100%;"></textarea>
+                </div>
+                
+                <!-- 内容语言 -->
+                <div class="form-group">
+                    <label>内容语言</label>
+                    <select id="contentLanguage" style="width: 100%;">
+                        <option value="ja">日语 (Japanese)</option>
+                        <option value="en">英语 (English)</option>
+                        <option value="zh">中文 (Chinese)</option>
+                        <option value="ko">韩语 (Korean)</option>
+                        <option value="es">西班牙语 (Spanish)</option>
+                        <option value="fr">法语 (French)</option>
+                    </select>
+                    <div style="font-size: 12px; color: #666; margin-top: 8px;">
+                        选择内容使用的语言。用户可以用任意语言提问，AI会自动翻译。
+                    </div>
+                </div>
+                
+                <!-- 图片上传区域（最多10个） -->
+                <div class="form-group" id="topicImagesSection">
+                    <label>图片（最多10个）</label>
+                    <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                        📸 每个图片必须填写描述（用于AI介绍图片内容，显示在第二画布上）<br>
+                        💡 提示：填写完所有信息后，点击"保存主题"会自动上传所有图片和视频
+                    </div>
+                    <div id="topicImagesList" style="margin-bottom: 12px;">
+                        <!-- 动态添加的图片项 -->
+                    </div>
+                    <button type="button" class="btn" onclick="addTopicImageItem()" style="background: #28a745; margin-bottom: 8px;" id="addImageBtn">
+                        + 添加图片
+                    </button>
+                </div>
+                
+                <!-- 视频上传区域（最多3个） -->
+                <div class="form-group" id="topicVideosSection">
+                    <label>视频（最多3个）</label>
+                    <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                        🎬 每个视频必须填写描述（用于AI说明视频内容，在播放前告知用户）<br>
+                        💡 提示：填写完所有信息后，点击"保存主题"会自动上传所有图片和视频
+                    </div>
+                    <div id="topicVideosList" style="margin-bottom: 12px;">
+                        <!-- 动态添加的视频项 -->
+                    </div>
+                    <button type="button" class="btn" onclick="addTopicVideoItem()" style="background: #28a745; margin-bottom: 8px;" id="addVideoBtn">
+                        + 添加视频
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
+                    <button class="btn" onclick="saveTopic()" id="saveTopicBtn">保存主题</button>
+                    <button class="btn" onclick="cancelTopicEdit()" style="background: #6c757d;" id="cancelTopicBtn" style="display: none;">取消编辑</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ASR设置面板 -->
+        <div class="panel hidden" id="asr-panel">
+            <h2>ASR设置</h2>
+            
+            <div style="background: #f8f9ff; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid #e1e5e9;">
+                <h3 style="margin-bottom: 16px; color: #333;">麦克风自动控制</h3>
+                <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+                    设置AI说话时麦克风的自动控制行为。
+                </p>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="autoStopMic" checked>
+                        <span>AI说话时自动停止麦克风</span>
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="autoStartMicOnConvEnd" checked>
+                        <span>对话结束时自动开始麦克风</span>
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="autoStartMicOn" checked>
+                        <span>AI中断时自动开始麦克风（能否被打断）</span>
+                    </label>
+                </div>
+                
+                <button class="btn" onclick="saveASRSettings()">保存ASR设置</button>
+            </div>
+            
+            <div style="background: #e8f4f8; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid #b3d9e6;">
+                <h3 style="margin-bottom: 16px; color: #333;">VAD高级设置（可选）</h3>
+                <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+                    语音活动检测阈值设置，高级用户可调整。
+                </p>
+                
+                <div class="form-group">
+                    <label>语音检测阈值 (0-100)</label>
+                    <input type="number" id="positiveSpeechThreshold" min="0" max="100" value="50" step="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>静音检测阈值 (0-100)</label>
+                    <input type="number" id="negativeSpeechThreshold" min="0" max="100" value="30" step="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>恢复帧数 (1-100)</label>
+                    <input type="number" id="redemptionFrames" min="1" max="100" value="8" step="1">
+                </div>
+                
+                <button class="btn" onclick="saveVADSettings()">保存VAD设置</button>
+            </div>
+        </div>
+        
+        
+        <!-- 二维码管理面板 -->
+        <div class="panel hidden" id="qrcode-panel">
+            <h2>二维码管理</h2>
+            <div class="qrcode-container">
+                <div id="qrcodeImage"></div>
+                <div class="qrcode-url" id="qrcodeUrl"></div>
+                <button class="btn btn-secondary" onclick="downloadQRCode()">下载PNG</button>
+                <button class="btn btn-success" onclick="printQRCode()">打印二维码</button>
+                <button class="btn" onclick="regenerateQRCode()">重新生成</button>
+            </div>
+        </div>
+        
+        <!-- 关于面板 -->
+        <div class="panel hidden" id="about-panel">
+            <h2>关于</h2>
+            <div class="about-content">
+                <h3>系统信息</h3>
+                <p><strong>版本:</strong> 1.0.0</p>
+                <p><strong>客户端ID:</strong> <span id="aboutClientId">client_001</span></p>
+                <p><strong>服务器地址:</strong> <span id="serverAddress">127.0.0.1:12393</span></p>
+                
+                <h3>功能特性</h3>
+                <ul>
+                    <li>多租户资源隔离</li>
+                    <li>广告视频上传管理</li>
+                    <li>Live2D角色控制</li>
+                    <li>语音识别与合成</li>
+                    <li>AI对话代理</li>
+                    <li>移动端控制面板</li>
+                </ul>
+                
+                <h3>技术支持</h3>
+                <p>如有问题请联系技术支持团队。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentClientId = 'client_001';
+        let currentTab = 'upload';
+        let files = [];
+        
+        // 更新range滑块显示值
+        function updateRangeValue(input, valueId) {
+            const value = parseFloat(input.value);
+            const displayValue = input.step && input.step !== '1' ? value.toFixed(2) : value.toString();
+            document.getElementById(valueId).textContent = displayValue;
+        }
+        
+        // 测试API连接
+        async function testAPI() {
+            try {
+                console.log('测试API连接...');
+                const response = await fetch('/api/ads');
+                if (response.ok) {
+                    console.log('API连接正常');
+                    return true;
+                } else {
+                    console.error('API连接失败:', response.status, response.statusText);
+                    return false;
+                }
+            } catch (error) {
+                console.error('API连接错误:', error);
+                return false;
+            }
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从URL参数获取客户端ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const clientId = urlParams.get('client');
+            if (clientId) {
+                currentClientId = clientId;
+                document.getElementById('clientId').textContent = clientId;
+                document.getElementById('aboutClientId').textContent = clientId;
+            }
+            
+            // 设置服务器地址
+            const serverAddress = window.location.host;
+            document.getElementById('serverAddress').textContent = serverAddress;
+            
+            // 添加调试信息
+            console.log('Web控制面板初始化:', {
+                clientId: currentClientId,
+                serverAddress: serverAddress,
+                currentUrl: window.location.href
+            });
+            
+            // 测试API连接
+            testAPI().then(apiOk => {
+                if (!apiOk) {
+                    console.warn('API连接测试失败，某些功能可能不可用');
+                }
+            });
+            
+            // 初始化标签页
+            initTabs();
+            
+            // 初始化媒体上传功能
+            initMediaUpload();
+            
+            // 加载媒体文件列表
+            loadMediaFiles();
+            
+            // 信号模式：不再需要加载设置
+            // loadSettings(); // 已移除
+            
+            // 加载角色预设列表（仅用于显示选项）
+            loadCharacterPresets();
+            
+            // 生成二维码
+            generateQRCode();
+            
+            // 加载主题列表
+            loadTopics();
+        });
+        
+        // 标签页切换
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const panels = document.querySelectorAll('.panel');
+            
+            // 初始化：确保媒体面板显示，其他面板隐藏
+            panels.forEach(panel => {
+                if (panel.id === 'media-panel') {
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
+            });
+            
+            // 确保媒体标签页是激活状态
+            tabs.forEach(tab => {
+                if (tab.dataset.tab === 'media') {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
+                    
+                    // 更新标签页状态
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 更新面板显示
+                    panels.forEach(panel => panel.classList.add('hidden'));
+                    const targetPanel = document.getElementById(tabName + '-panel');
+                    if (targetPanel) {
+                        targetPanel.classList.remove('hidden');
+                    }
+                    
+                    currentTab = tabName;
+                    
+                    // 根据标签页加载相应数据
+                    if (tabName === 'media') {
+                        loadMediaFiles();
+                        loadAudioSettings();
+                    } else if (tabName === 'general') {
+                        loadCharacterPresets();
+                    } else if (tabName === 'qrcode') {
+                        generateQRCode();
+                    }
+                });
+            });
+        }
+        
+        // 初始化媒体上传功能
+        function initMediaUpload() {
+            const uploadArea = document.getElementById('mediaUploadArea');
+            const fileInput = document.getElementById('mediaFileInput');
+            
+            uploadArea.addEventListener('click', () => fileInput.click());
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                uploadMediaFiles(files);
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                uploadMediaFiles(e.target.files);
+            });
+        }
+        
+        // 上传媒体文件
+        async function uploadMediaFiles(fileList) {
+            const statusDiv = document.getElementById('mediaUploadStatus');
+            statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div><div>上传中...</div></div>';
+            
+            try {
+                let successCount = 0;
+                let errorCount = 0;
+                const errors = [];
+                
+                // 逐个上传文件
+                for (let i = 0; i < fileList.length; i++) {
+                    const file = fileList[i];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('client', currentClientId);
+                    formData.append('category', 'ads');
+                    
+                    try {
+                        const response = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            successCount++;
+                        } else {
+                            const error = await response.text();
+                            errors.push(`${file.name}: ${error}`);
+                            errorCount++;
+                        }
+                    } catch (error) {
+                        errors.push(`${file.name}: ${error.message}`);
+                        errorCount++;
+                    }
+                }
+                
+                // 显示结果
+                if (successCount > 0 && errorCount === 0) {
+                    statusDiv.innerHTML = `<div class="alert alert-success">上传成功！上传了 ${successCount} 个文件。</div>`;
+                } else if (successCount > 0 && errorCount > 0) {
+                    statusDiv.innerHTML = `<div class="alert alert-info">部分成功：${successCount} 个成功，${errorCount} 个失败。<br>${errors.join('<br>')}</div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-error">上传失败：${errors.join('<br>')}</div>`;
+                }
+                
+                // 重新加载文件列表
+                if (successCount > 0) {
+                    loadMediaFiles();
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="alert alert-error">上传失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 加载媒体文件列表
+        async function loadMediaFiles() {
+            const fileListDiv = document.getElementById('mediaFileList');
+            fileListDiv.innerHTML = '<div class="loading"><div class="spinner"></div><div>加载文件中...</div></div>';
+            
+            try {
+                const url = `/api/media/list?client=${encodeURIComponent(currentClientId)}&category=ads`;
+                console.log('正在请求媒体文件列表:', url);
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('媒体文件列表API响应:', data);
+                    renderMediaFileList(data.files || []);
+                } else {
+                    const error = await response.text();
+                    console.error('媒体文件列表API失败:', response.status, error);
+                    fileListDiv.innerHTML = `<div class="alert alert-error">加载文件失败: ${error}</div>`;
+                }
+            } catch (error) {
+                console.error('媒体文件列表加载错误:', error);
+                fileListDiv.innerHTML = `<div class="alert alert-error">加载文件失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 渲染媒体文件列表
+        function renderMediaFileList(mediaFiles) {
+            const fileListDiv = document.getElementById('mediaFileList');
+            console.log('渲染媒体文件列表:', mediaFiles);
+            
+            if (!mediaFiles || mediaFiles.length === 0) {
+                console.log('没有媒体文件，显示空状态');
+                fileListDiv.innerHTML = '<div class="alert alert-info">暂无广告视频</div>';
+                return;
+            }
+            
+            console.log(`找到 ${mediaFiles.length} 个媒体文件`);
+            let html = '';
+            mediaFiles.forEach(file => {
+                console.log('渲染文件:', file);
+                // 使用filename字段（API返回的字段名）
+                const displayName = file.filename || file.name || 'unknown';
+                const fileSize = file.size_mb || (file.size_bytes / 1024 / 1024).toFixed(2);
+                html += `
+                    <div class="file-item">
+                        <div class="file-info">
+                            <div class="file-name">${displayName}</div>
+                            <div class="file-size">${fileSize} MB</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-small btn-danger" onclick="deleteMediaFile('${file.filename}')">删除</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            fileListDiv.innerHTML = html;
+        }
+        
+        // 删除媒体文件
+        async function deleteMediaFile(filename) {
+            if (!confirm('确定要删除这个广告视频吗？')) return;
+            
+            try {
+                // ✅ 使用query参数，不是body
+                const url = `/api/media/delete?category=ads&filename=${encodeURIComponent(filename)}&client=${encodeURIComponent(currentClientId)}`;
+                const response = await fetch(url, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('删除成功');
+                    loadMediaFiles(); // 重新加载文件列表
+                } else {
+                    const error = await response.text();
+                    alert('删除失败: ' + error);
+                }
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        // 加载音频设置（信号模式：不需要加载，使用默认值）
+        async function loadAudioSettings() {
+            // 信号模式：不查询当前状态，使用默认值
+                document.getElementById('audioMode').value = 'audio';
+        }
+        
+        // 保存音频设置（信号模式）
+        async function saveAudioSettings() {
+            const audioMode = document.getElementById('audioMode').value;
+            
+            if (!audioMode) {
+                alert('请选择音频模式');
+                return;
+            }
+            
+            try {
+                // 使用信号模式API：直接发送设置信号，无需查询当前状态
+                const formData = new FormData();
+                formData.append('audio_mode', audioMode);
+                formData.append('client', currentClientId);
+                
+                const response = await fetch('/api/media/audio-mode', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('✅ ' + result.message);
+                    } else {
+                        alert('❌ 保存失败: ' + (result.error || '未知错误'));
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ 保存失败: ' + (error.error || '网络错误'));
+                }
+            } catch (error) {
+                alert('❌ 保存失败: ' + error.message);
+            }
+        }
+        
+        // 上传文件
+        async function uploadFiles(fileList) {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div><div>上传中...</div></div>';
+            
+            try {
+                let successCount = 0;
+                let errorCount = 0;
+                const errors = [];
+                
+                // 逐个上传文件（因为API只支持单文件上传）
+                for (let i = 0; i < fileList.length; i++) {
+                    const file = fileList[i];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('client', currentClientId);
+                    formData.append('category', 'ads');
+                    
+                    try {
+                        const response = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            successCount++;
+                        } else {
+                            const error = await response.text();
+                            errors.push(`${file.name}: ${error}`);
+                            errorCount++;
+                        }
+                    } catch (error) {
+                        errors.push(`${file.name}: ${error.message}`);
+                        errorCount++;
+                    }
+                }
+                
+                // 显示结果
+                if (successCount > 0 && errorCount === 0) {
+                    statusDiv.innerHTML = `<div class="alert alert-success">上传成功！上传了 ${successCount} 个文件。</div>`;
+                } else if (successCount > 0 && errorCount > 0) {
+                    statusDiv.innerHTML = `<div class="alert alert-info">部分成功：${successCount} 个成功，${errorCount} 个失败。<br>${errors.join('<br>')}</div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-error">上传失败：${errors.join('<br>')}</div>`;
+                }
+                
+                // 重新加载文件列表
+                if (successCount > 0) {
+                    loadFiles();
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="alert alert-error">上传失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 加载文件列表
+        async function loadFiles() {
+            const fileListDiv = document.getElementById('fileList');
+            fileListDiv.innerHTML = '<div class="loading"><div class="spinner"></div><div>加载文件中...</div></div>';
+            
+            try {
+                const url = `/api/media/list?client=${encodeURIComponent(currentClientId)}&category=ads`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    files = await response.json();
+                    renderFileList();
+                } else {
+                    const error = await response.text();
+                    fileListDiv.innerHTML = `<div class="alert alert-error">加载文件失败: ${error}</div>`;
+                }
+            } catch (error) {
+                fileListDiv.innerHTML = `<div class="alert alert-error">加载文件失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 渲染文件列表
+        function renderFileList() {
+            const fileListDiv = document.getElementById('fileList');
+            
+            if (files.length === 0) {
+                fileListDiv.innerHTML = '<div class="alert alert-info">暂无文件</div>';
+                return;
+            }
+            
+            let html = '';
+            files.forEach(file => {
+                html += `
+                    <div class="file-item">
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${(file.size_bytes / 1024 / 1024).toFixed(2)} MB</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-small btn-danger" onclick="deleteFile('${file.id}')">删除</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            fileListDiv.innerHTML = html;
+        }
+        
+        // 删除文件
+        async function deleteFile(fileId) {
+            if (!confirm('确定要删除这个文件吗？')) return;
+            
+            try {
+                const response = await fetch('/api/media/delete', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        file_id: fileId,
+                        client: currentClientId,
+                        category: 'ads'
+                    })
+                });
+                
+                if (response.ok) {
+                    loadFiles(); // 重新加载文件列表
+                } else {
+                    const error = await response.text();
+                    alert('删除失败: ' + error);
+                }
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        // 生成二维码
+        async function generateQRCode() {
+            try {
+                const url = `/api/qrcode/upload?client=${encodeURIComponent(currentClientId)}&category=ads`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    const result = await response.json();
+                    // 后端返回的是 qrcode_base64 (已包含data:前缀) 和 control_panel_url
+                    const qrcodeData = result.qrcode_base64 || `data:image/png;base64,${result.qrcode_image}`;
+                    document.getElementById('qrcodeImage').innerHTML = `<img src="${qrcodeData}" alt="QR Code" class="qrcode-image">`;
+                    document.getElementById('qrcodeUrl').textContent = result.control_panel_url || result.upload_url;
+                } else {
+                    const error = await response.text();
+                    document.getElementById('qrcodeImage').innerHTML = `<div class="alert alert-error">生成二维码失败: ${error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('qrcodeImage').innerHTML = `<div class="alert alert-error">生成二维码失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 下载二维码
+        function downloadQRCode() {
+            const img = document.querySelector('.qrcode-image');
+            if (img) {
+                const link = document.createElement('a');
+                link.download = `qrcode_${currentClientId}.png`;
+                link.href = img.src;
+                link.click();
+            }
+        }
+        
+        // 打印二维码
+        function printQRCode() {
+            const img = document.querySelector('.qrcode-image');
+            if (img) {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                        <head><title>二维码打印</title></head>
+                        <body style="text-align: center; padding: 20px;">
+                            <h2>客户端 ${currentClientId} 控制面板二维码</h2>
+                            <img src="${img.src}" style="max-width: 300px;">
+                            <p>扫描此二维码可直接打开控制面板</p>
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
+        }
+        
+        // 重新生成二维码
+        function regenerateQRCode() {
+            generateQRCode();
+        }
+        
+        // 加载设置（简化版，只加载角色预设）
+        // 信号模式：不再需要加载设置，用户只需发送想要的状态
+        async function loadSettings() {
+            // 信号模式：不查询当前状态，只加载角色预设列表
+            console.log('信号模式：跳过设置加载，直接使用用户选择');
+        }
+        
+        // 加载角色预设
+        async function loadCharacterPresets() {
+            try {
+                const response = await fetch('/api/config-files');
+                if (response.ok) {
+                    const data = await response.json();
+                    const select = document.getElementById('characterPreset');
+                    
+                    // 清空现有选项
+                    select.innerHTML = '';
+                    
+                    // 添加默认选项
+                    select.innerHTML = '<option value="">选择角色预设...</option>';
+                    
+                    // 添加角色预设选项
+                    if (data.configs && Array.isArray(data.configs)) {
+                        data.configs.forEach(config => {
+                            const option = document.createElement('option');
+                            option.value = config.filename;
+                            option.textContent = config.name;
+                            select.appendChild(option);
+                        });
+                    }
+                } else {
+                    console.error('加载角色预设失败:', response.status);
+                    document.getElementById('characterPreset').innerHTML = '<option value="">加载失败</option>';
+                }
+            } catch (error) {
+                console.error('加载角色预设失败:', error);
+                document.getElementById('characterPreset').innerHTML = '<option value="">加载失败</option>';
+            }
+        }
+        
+        // 通用保存函数
+        async function saveSettings(settingsType, settings) {
+            try {
+                const response = await fetch('/api/settings/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        settings_data: settings,
+                        client: currentClientId
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // 显示详细结果
+                    let message = result.message;
+                    if (result.heavyweight_pending && result.heavyweight_pending.length > 0) {
+                        message += '\n\n⚠️ 部分设置需要重启应用才能生效';
+                    }
+                    
+                    alert(message);
+                } else {
+                    const error = await response.text();
+                    alert('保存失败: ' + error);
+                }
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+            }
+        }
+        
+        // 保存角色设置（信号模式）
+        async function saveCharacterSettings() {
+            const characterPreset = document.getElementById('characterPreset').value;
+            
+            if (!characterPreset) {
+                alert('请选择一个角色预设');
+                return;
+            }
+            
+            try {
+                // 使用信号模式API：直接发送切换信号，无需查询当前状态
+                const formData = new FormData();
+                formData.append('character_preset', characterPreset);
+                formData.append('client', currentClientId);
+                
+                const response = await fetch('/api/live2d/switch', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('✅ ' + result.message);
+                    } else {
+                        alert('❌ 切换失败: ' + (result.error || '未知错误'));
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ 切换失败: ' + (error.error || '网络错误'));
+                }
+            } catch (error) {
+                alert('❌ 切换失败: ' + error.message);
+            }
+        }
+        
+        // 保存ASR设置（信号模式）
+        async function saveASRSettings() {
+            try {
+                const formData = new FormData();
+                formData.append('auto_stop_mic', document.getElementById('autoStopMic').checked);
+                formData.append('auto_start_mic_on_conv_end', document.getElementById('autoStartMicOnConvEnd').checked);
+                formData.append('auto_start_mic_on', document.getElementById('autoStartMicOn').checked);
+                formData.append('client', currentClientId);
+                
+                const response = await fetch('/api/asr/settings', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('✅ ' + result.message);
+                    } else {
+                        alert('❌ 保存失败: ' + (result.error || '未知错误'));
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ 保存失败: ' + (error.error || '网络错误'));
+                }
+            } catch (error) {
+                alert('❌ 保存失败: ' + error.message);
+            }
+        }
+        
+        // 保存VAD设置（信号模式）
+        async function saveVADSettings() {
+            try {
+                const formData = new FormData();
+                const positiveThreshold = parseFloat(document.getElementById('positiveSpeechThreshold').value);
+                const negativeThreshold = parseFloat(document.getElementById('negativeSpeechThreshold').value);
+                const redemptionFrames = parseInt(document.getElementById('redemptionFrames').value);
+                
+                if (isNaN(positiveThreshold) || isNaN(negativeThreshold) || isNaN(redemptionFrames)) {
+                    alert('❌ 请输入有效的数值');
+                    return;
+                }
+                
+                formData.append('positive_speech_threshold', positiveThreshold);
+                formData.append('negative_speech_threshold', negativeThreshold);
+                formData.append('redemption_frames', redemptionFrames);
+                formData.append('client', currentClientId);
+                
+                const response = await fetch('/api/asr/settings', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('✅ ' + result.message);
+                    } else {
+                        alert('❌ 保存失败: ' + (result.error || '未知错误'));
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ 保存失败: ' + (error.error || '网络错误'));
+                }
+            } catch (error) {
+                alert('❌ 保存失败: ' + error.message);
+            }
+        }
+        
+        // ==================== 主题介绍管理 ====================
+        
+        let topicImageItems = [];
+        let topicVideoItems = [];
+        
+        // 加载主题列表
+        async function loadTopics() {
+            const topicsListDiv = document.getElementById('topicsList');
+            if (!topicsListDiv) return;
+            
+            topicsListDiv.innerHTML = '<div class="loading"><div class="spinner"></div><div>加载主题中...</div></div>';
+            
+            try {
+                const url = `/api/topics?client=${encodeURIComponent(currentClientId)}`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    renderTopicsList(data.topics || []);
+                } else {
+                    const error = await response.text();
+                    topicsListDiv.innerHTML = `<div class="alert alert-error">加载失败: ${error}</div>`;
+                }
+            } catch (error) {
+                topicsListDiv.innerHTML = `<div class="alert alert-error">加载失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 渲染主题列表
+        function renderTopicsList(topics) {
+            const topicsListDiv = document.getElementById('topicsList');
+            if (!topicsListDiv) return;
+            
+            if (topics.length === 0) {
+                topicsListDiv.innerHTML = '<div class="alert alert-info">暂无主题，请创建新主题</div>';
+                return;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+            topics.forEach(topic => {
+                const name = topic.name || 'Unknown';
+                html += `
+                    <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #e1e5e9; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">${name}</div>
+                            <div style="font-size: 14px; color: #666;">
+                                图片: ${topic.image_count || 0} | 视频: ${topic.video_count || 0}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" onclick="editTopic('${topic.topic_id}')" style="background: #007bff; padding: 8px 16px; font-size: 14px;">更新</button>
+                            <button class="btn" onclick="deleteTopic('${topic.topic_id}')" style="background: #dc3545; padding: 8px 16px; font-size: 14px;">删除</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            topicsListDiv.innerHTML = html;
+        }
+        
+        // 添加图片项
+        function addTopicImageItem() {
+            if (topicImageItems.length >= 10) {
+                alert('图片数量已达上限（10个）');
+                return;
+            }
+            
+            const itemId = `img_${Date.now()}`;
+            topicImageItems.push({ id: itemId, file: null, description: '' });
+            
+            const imagesList = document.getElementById('topicImagesList');
+            const itemDiv = document.createElement('div');
+            itemDiv.id = `imageItem_${itemId}`;
+            itemDiv.style.cssText = 'background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #dee2e6;';
+            itemDiv.innerHTML = `
+                <div class="upload-area" onclick="document.getElementById('imgFile_${itemId}').click()" style="margin-bottom: 12px; cursor: pointer; padding: 30px; text-align: center; border: 2px dashed #007bff; border-radius: 8px; background: #f8f9ff;">
+                    <div style="font-size: 40px;">📁</div>
+                    <div style="font-weight: 600; margin-top: 8px;">点击选择图片文件</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">支持格式: JPG, PNG, GIF, WEBP</div>
+                    <div id="imgFileName_${itemId}" style="color: #28a745; font-weight: 600; margin-top: 8px;"></div>
+                </div>
+                <input type="file" id="imgFile_${itemId}" accept="image/*" onchange="handleTopicImageFile('${itemId}', this)" style="display: none;">
+                
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px;">
+                        📝 图片描述 <span style="color: red;">*</span>
+                    </label>
+                    <input type="text" placeholder="必填，如：ホテルの外観" onchange="updateTopicImageDesc('${itemId}', this.value)" id="imgDesc_${itemId}" style="width: 100%; padding: 10px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 14px;" required>
+                </div>
+                
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="uploadSingleImage('${itemId}')" style="background: #28a745; padding: 10px 20px; flex: 1; font-weight: 600; font-size: 15px;">
+                        📤 上传此图片
+                    </button>
+                    <button class="btn" onclick="removeTopicImageItem('${itemId}')" style="background: #dc3545; padding: 10px 20px;">
+                        🗑️ 删除
+                    </button>
+                </div>
+                <div id="imgStatus_${itemId}" style="margin-top: 8px; font-size: 13px; font-weight: 600;"></div>
+            `;
+            imagesList.appendChild(itemDiv);
+            
+            updateAddButtonsState();
+        }
+        
+        // 添加视频项
+        function addTopicVideoItem() {
+            if (topicVideoItems.length >= 3) {
+                alert('视频数量已达上限（3个）');
+                return;
+            }
+            
+            const itemId = `vid_${Date.now()}`;
+            topicVideoItems.push({ id: itemId, file: null, description: '' });
+            
+            const videosList = document.getElementById('topicVideosList');
+            const itemDiv = document.createElement('div');
+            itemDiv.id = `videoItem_${itemId}`;
+            itemDiv.style.cssText = 'background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #dee2e6;';
+            itemDiv.innerHTML = `
+                <div class="upload-area" onclick="document.getElementById('vidFile_${itemId}').click()" style="margin-bottom: 12px; cursor: pointer; padding: 30px; text-align: center; border: 2px dashed #007bff; border-radius: 8px; background: #f8f9ff;">
+                    <div style="font-size: 40px;">🎬</div>
+                    <div style="font-weight: 600; margin-top: 8px;">点击选择视频文件</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">支持格式: MP4, AVI, MOV, WEBM | 最大500MB</div>
+                    <div id="vidFileName_${itemId}" style="color: #28a745; font-weight: 600; margin-top: 8px;"></div>
+                </div>
+                <input type="file" id="vidFile_${itemId}" accept="video/*" onchange="handleTopicVideoFile('${itemId}', this)" style="display: none;">
+                
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px;">
+                        📝 视频描述 <span style="color: red;">*</span>
+                    </label>
+                    <input type="text" placeholder="必填，如：ホテルツアー" onchange="updateTopicVideoDesc('${itemId}', this.value)" id="vidDesc_${itemId}" style="width: 100%; padding: 10px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 14px;" required>
+                </div>
+                
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="uploadSingleVideo('${itemId}')" style="background: #28a745; padding: 10px 20px; flex: 1; font-weight: 600; font-size: 15px;">
+                        📤 上传此视频
+                    </button>
+                    <button class="btn" onclick="removeTopicVideoItem('${itemId}')" style="background: #dc3545; padding: 10px 20px;">
+                        🗑️ 删除
+                    </button>
+                </div>
+                <div id="vidStatus_${itemId}" style="margin-top: 8px; font-size: 13px; font-weight: 600;"></div>
+            `;
+            videosList.appendChild(itemDiv);
+            
+            updateAddButtonsState();
+        }
+        
+        // 处理图片文件选择
+        function handleTopicImageFile(itemId, input) {
+            const item = topicImageItems.find(i => i.id === itemId);
+            if (item && input.files && input.files[0]) {
+                item.file = input.files[0];
+                // 显示文件名
+                const fileNameDiv = document.getElementById(`imgFileName_${itemId}`);
+                if (fileNameDiv) {
+                    const fileSize = (item.file.size / (1024 * 1024)).toFixed(2);
+                    fileNameDiv.innerHTML = `✅ 已选择: ${item.file.name} (${fileSize}MB)`;
+                }
+            }
+        }
+        
+        // 处理视频文件选择
+        function handleTopicVideoFile(itemId, input) {
+            const item = topicVideoItems.find(i => i.id === itemId);
+            if (item && input.files && input.files[0]) {
+                item.file = input.files[0];
+                // 显示文件名
+                const fileNameDiv = document.getElementById(`vidFileName_${itemId}`);
+                if (fileNameDiv) {
+                    const fileSize = (item.file.size / (1024 * 1024)).toFixed(2);
+                    fileNameDiv.innerHTML = `✅ 已选择: ${item.file.name} (${fileSize}MB)`;
+                }
+            }
+        }
+        
+        // 更新图片描述
+        function updateTopicImageDesc(itemId, value) {
+            const item = topicImageItems.find(i => i.id === itemId);
+            if (item) {
+                item.description = value;
+            }
+        }
+        
+        // 更新视频描述
+        function updateTopicVideoDesc(itemId, value) {
+            const item = topicVideoItems.find(i => i.id === itemId);
+            if (item) {
+                item.description = value;
+            }
+        }
+        
+        // 删除图片项
+        function removeTopicImageItem(itemId) {
+            topicImageItems = topicImageItems.filter(i => i.id !== itemId);
+            const itemDiv = document.getElementById(`imageItem_${itemId}`);
+            if (itemDiv) {
+                itemDiv.remove();
+            }
+            updateAddButtonsState();
+        }
+        
+        // 删除视频项
+        function removeTopicVideoItem(itemId) {
+            topicVideoItems = topicVideoItems.filter(i => i.id !== itemId);
+            const itemDiv = document.getElementById(`videoItem_${itemId}`);
+            if (itemDiv) {
+                itemDiv.remove();
+            }
+            updateAddButtonsState();
+        }
+        
+        // 更新添加按钮状态
+        function updateAddButtonsState() {
+            const addImageBtn = document.getElementById('addImageBtn');
+            const addVideoBtn = document.getElementById('addVideoBtn');
+            if (addImageBtn) addImageBtn.disabled = topicImageItems.length >= 10;
+            if (addVideoBtn) addVideoBtn.disabled = topicVideoItems.length >= 3;
+        }
+        
+        // 上传单个图片（可选功能，保存时会自动上传）
+        async function uploadSingleImage(itemId) {
+            const item = topicImageItems.find(i => i.id === itemId);
+            if (!item) return;
+            
+            // 验证文件和描述
+            if (!item.file) {
+                alert('❌ 请先选择图片文件！');
+                return;
+            }
+            
+            if (!item.description || !item.description.trim()) {
+                alert('❌ 请填写图片描述！\n\n描述是必需的，用于AI介绍图片内容。');
+                return;
+            }
+            
+            // 获取当前正在编辑的主题ID，如果没有则提示保存
+            let editingTopicId = document.getElementById('editingTopicId').value;
+            if (!editingTopicId) {
+                const name = document.getElementById('topicName').value.trim();
+                if (!name) {
+                    alert('⚠️ 请先填写主题名称并保存主题！\n\n提示：您可以填写所有信息后，点击"保存主题"一次性保存并上传。');
+                    return;
+                }
+                // 尝试先创建主题
+                try {
+                    const formData = new FormData();
+                    formData.append('name', name);
+                    formData.append('description', document.getElementById('topicDescription').value.trim());
+                    formData.append('language', document.getElementById('contentLanguage').value);
+                    formData.append('client', currentClientId);
+                    
+                    const response = await fetch('/api/topics', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('创建主题失败');
+                    }
+                    
+                    const result = await response.json();
+                    editingTopicId = result.topic_id;
+                    document.getElementById('editingTopicId').value = editingTopicId;
+                    document.getElementById('topicFormTitle').textContent = '编辑主题';
+                    document.getElementById('cancelTopicBtn').style.display = 'inline-block';
+                } catch (error) {
+                    alert('❌ 自动创建主题失败，请先点击"保存主题"按钮。');
+                    return;
+                }
+            }
+            
+            const statusDiv = document.getElementById(`imgStatus_${itemId}`);
+            statusDiv.innerHTML = '<span style="color: #007bff;">⏳ 上传中...</span>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', item.file);
+                formData.append('description', item.description.trim());
+                formData.append('client', currentClientId);
+                
+                const response = await fetch(`/api/topics/${editingTopicId}/images`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    statusDiv.innerHTML = '<span style="color: #28a745;">✅ 上传成功！</span>';
+                    item.uploaded = true;
+                    item.uploadedId = result.image_id;
+                    loadTopics(); // 刷新列表
+                } else {
+                    const error = await response.json();
+                    statusDiv.innerHTML = `<span style="color: #dc3545;">❌ ${error.error || '上传失败'}</span>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span style="color: #dc3545;">❌ 上传失败: ${error.message}</span>`;
+            }
+        }
+        
+        // 上传单个视频（可选功能，保存时会自动上传）
+        async function uploadSingleVideo(itemId) {
+            const item = topicVideoItems.find(i => i.id === itemId);
+            if (!item) return;
+            
+            // 验证文件和描述
+            if (!item.file) {
+                alert('❌ 请先选择视频文件！');
+                return;
+            }
+            
+            if (!item.description || !item.description.trim()) {
+                alert('❌ 请填写视频描述！\n\n描述是必需的，用于AI说明视频内容。');
+                return;
+            }
+            
+            // 获取当前正在编辑的主题ID，如果没有则提示保存
+            let editingTopicId = document.getElementById('editingTopicId').value;
+            if (!editingTopicId) {
+                const name = document.getElementById('topicName').value.trim();
+                if (!name) {
+                    alert('⚠️ 请先填写主题名称并保存主题！\n\n提示：您可以填写所有信息后，点击"保存主题"一次性保存并上传。');
+                    return;
+                }
+                // 尝试先创建主题
+                try {
+                    const formData = new FormData();
+                    formData.append('name', name);
+                    formData.append('description', document.getElementById('topicDescription').value.trim());
+                    formData.append('language', document.getElementById('contentLanguage').value);
+                    formData.append('client', currentClientId);
+                    
+                    const response = await fetch('/api/topics', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('创建主题失败');
+                    }
+                    
+                    const result = await response.json();
+                    editingTopicId = result.topic_id;
+                    document.getElementById('editingTopicId').value = editingTopicId;
+                    document.getElementById('topicFormTitle').textContent = '编辑主题';
+                    document.getElementById('cancelTopicBtn').style.display = 'inline-block';
+                } catch (error) {
+                    alert('❌ 自动创建主题失败，请先点击"保存主题"按钮。');
+                    return;
+                }
+            }
+            
+            const statusDiv = document.getElementById(`vidStatus_${itemId}`);
+            statusDiv.innerHTML = '<span style="color: #007bff;">⏳ 上传中...</span>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', item.file);
+                formData.append('description', item.description.trim());
+                formData.append('client', currentClientId);
+                
+                const response = await fetch(`/api/topics/${editingTopicId}/videos`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    statusDiv.innerHTML = '<span style="color: #28a745;">✅ 上传成功！</span>';
+                    item.uploaded = true;
+                    item.uploadedId = result.video_id;
+                    loadTopics(); // 刷新列表
+                } else {
+                    const error = await response.json();
+                    statusDiv.innerHTML = `<span style="color: #dc3545;">❌ ${error.error || '上传失败'}</span>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span style="color: #dc3545;">❌ 上传失败: ${error.message}</span>`;
+            }
+        }
+        
+        // 保存主题（自动上传所有已选择的图片和视频）
+        async function saveTopic() {
+            const editingTopicId = document.getElementById('editingTopicId').value;
+            const name = document.getElementById('topicName').value.trim();
+            const description = document.getElementById('topicDescription').value.trim();
+            const language = document.getElementById('contentLanguage').value;
+            
+            // 验证名称
+            if (!name) {
+                alert('请填写主题名称');
+                return;
+            }
+            
+            // 验证图片和视频（如果已选择）
+            const pendingImages = topicImageItems.filter(item => item.file && !item.uploaded);
+            const pendingVideos = topicVideoItems.filter(item => item.file && !item.uploaded);
+            
+            for (const item of pendingImages) {
+                if (!item.description || !item.description.trim()) {
+                    alert(`❌ 请填写所有图片的描述！\n\n图片 "${item.file?.name || '未命名'}" 缺少描述。`);
+                    return;
+                }
+            }
+            
+            for (const item of pendingVideos) {
+                if (!item.description || !item.description.trim()) {
+                    alert(`❌ 请填写所有视频的描述！\n\n视频 "${item.file?.name || '未命名'}" 缺少描述。`);
+                    return;
+                }
+            }
+            
+            // 禁用保存按钮，显示加载状态
+            const saveBtn = document.getElementById('saveTopicBtn');
+            const originalText = saveBtn.textContent;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '⏳ 保存中...';
+            
+            try {
+                let topicId = editingTopicId;
+                
+                // 创建或更新主题基本信息
+                if (editingTopicId) {
+                    // 更新主题
+                    const formData = new FormData();
+                    formData.append('name', name);
+                    formData.append('description', description);
+                    formData.append('language', language);
+                    formData.append('client', currentClientId);
+                    
+                    const response = await fetch(`/api/topics/${editingTopicId}`, {
+                        method: 'PUT',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || '更新失败');
+                    }
+                } else {
+                    // 创建新主题
+                    const formData = new FormData();
+                    formData.append('name', name);
+                    formData.append('description', description);
+                    formData.append('language', language);
+                    formData.append('client', currentClientId);
+                    
+                    const response = await fetch('/api/topics', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || '创建失败');
+                    }
+                    
+                    const result = await response.json();
+                    topicId = result.topic_id;
+                    
+                    // 设置为编辑模式
+                    document.getElementById('editingTopicId').value = topicId;
+                    document.getElementById('topicFormTitle').textContent = '编辑主题';
+                    document.getElementById('cancelTopicBtn').style.display = 'inline-block';
+                }
+                
+                // 自动上传所有未上传的图片
+                let uploadedImages = 0;
+                let failedImages = 0;
+                for (const item of pendingImages) {
+                    try {
+                        const statusDiv = document.getElementById(`imgStatus_${item.id}`);
+                        if (statusDiv) statusDiv.innerHTML = '<span style="color: #007bff;">⏳ 上传中...</span>';
+                        
+                        const formData = new FormData();
+                        formData.append('file', item.file);
+                        formData.append('description', item.description.trim());
+                        formData.append('client', currentClientId);
+                        
+                        const response = await fetch(`/api/topics/${topicId}/images`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            const result = await response.json();
+                            item.uploaded = true;
+                            item.uploadedId = result.image_id;
+                            uploadedImages++;
+                            if (statusDiv) statusDiv.innerHTML = '<span style="color: #28a745;">✅ 已上传</span>';
+                        } else {
+                            const error = await response.json();
+                            failedImages++;
+                            if (statusDiv) statusDiv.innerHTML = `<span style="color: #dc3545;">❌ ${error.error || '上传失败'}</span>`;
+                        }
+                    } catch (error) {
+                        failedImages++;
+                        const statusDiv = document.getElementById(`imgStatus_${item.id}`);
+                        if (statusDiv) statusDiv.innerHTML = `<span style="color: #dc3545;">❌ 上传失败: ${error.message}</span>`;
+                    }
+                }
+                
+                // 自动上传所有未上传的视频
+                let uploadedVideos = 0;
+                let failedVideos = 0;
+                for (const item of pendingVideos) {
+                    try {
+                        const statusDiv = document.getElementById(`vidStatus_${item.id}`);
+                        if (statusDiv) statusDiv.innerHTML = '<span style="color: #007bff;">⏳ 上传中...</span>';
+                        
+                        const formData = new FormData();
+                        formData.append('file', item.file);
+                        formData.append('description', item.description.trim());
+                        formData.append('client', currentClientId);
+                        
+                        const response = await fetch(`/api/topics/${topicId}/videos`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            const result = await response.json();
+                            item.uploaded = true;
+                            item.uploadedId = result.video_id;
+                            uploadedVideos++;
+                            if (statusDiv) statusDiv.innerHTML = '<span style="color: #28a745;">✅ 已上传</span>';
+                        } else {
+                            const error = await response.json();
+                            failedVideos++;
+                            if (statusDiv) statusDiv.innerHTML = `<span style="color: #dc3545;">❌ ${error.error || '上传失败'}</span>`;
+                        }
+                    } catch (error) {
+                        failedVideos++;
+                        const statusDiv = document.getElementById(`vidStatus_${item.id}`);
+                        if (statusDiv) statusDiv.innerHTML = `<span style="color: #dc3545;">❌ 上传失败: ${error.message}</span>`;
+                    }
+                }
+                
+                // 显示结果
+                let message = '✅ 保存成功！\n\n';
+                if (uploadedImages > 0 || uploadedVideos > 0) {
+                    message += `📸 已上传 ${uploadedImages} 张图片\n`;
+                    message += `🎬 已上传 ${uploadedVideos} 个视频\n\n`;
+                }
+                if (failedImages > 0 || failedVideos > 0) {
+                    message += `⚠️ ${failedImages} 张图片上传失败\n`;
+                    message += `⚠️ ${failedVideos} 个视频上传失败\n`;
+                }
+                if (uploadedImages === 0 && uploadedVideos === 0 && failedImages === 0 && failedVideos === 0) {
+                    message += '💡 提示：您可以继续添加图片和视频，然后再次点击"保存主题"上传。';
+                }
+                
+                alert(message);
+                
+                // 刷新主题列表
+                loadTopics();
+                
+            } catch (error) {
+                alert('❌ 保存失败: ' + error.message);
+            } finally {
+                // 恢复保存按钮
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+            }
+        }
+        
+        // 编辑主题
+        async function editTopic(topicId) {
+            try {
+                const response = await fetch(`/api/topics/${topicId}?client=${encodeURIComponent(currentClientId)}`);
+                if (!response.ok) {
+                    throw new Error('加载主题失败');
+                }
+                
+                const data = await response.json();
+                const topic = data.topic;
+                
+                // 填充表单
+                document.getElementById('editingTopicId').value = topicId;
+                document.getElementById('topicFormTitle').textContent = '编辑主题';
+                document.getElementById('cancelTopicBtn').style.display = 'inline-block';
+                
+                // 填充名称和描述
+                document.getElementById('topicName').value = topic.name || '';
+                document.getElementById('topicDescription').value = topic.description || '';
+                document.getElementById('contentLanguage').value = topic.language || 'ja';
+                
+                // 清空并重新加载图片和视频项
+                topicImageItems = [];
+                topicVideoItems = [];
+                document.getElementById('topicImagesList').innerHTML = '';
+                document.getElementById('topicVideosList').innerHTML = '';
+                
+                // 加载现有图片（只显示，不能重新上传）
+                for (const img of topic.images || []) {
+                    addTopicImageItem();
+                    const lastItem = topicImageItems[topicImageItems.length - 1];
+                    lastItem.description = img.description || '';
+                    // 禁用文件输入（编辑时不能重新上传）
+                    const itemDiv = document.getElementById(`imageItem_${lastItem.id}`);
+                    if (itemDiv) {
+                        const fileInput = itemDiv.querySelector('input[type="file"]');
+                        if (fileInput) fileInput.disabled = true;
+                        // 填充描述输入框
+                        const descInput = itemDiv.querySelector('input[type="text"]');
+                        if (descInput) descInput.value = img.description || '';
+                    }
+                }
+                
+                // 加载现有视频（只显示，不能重新上传）
+                for (const vid of topic.videos || []) {
+                    addTopicVideoItem();
+                    const lastItem = topicVideoItems[topicVideoItems.length - 1];
+                    lastItem.description = vid.description || '';
+                    // 禁用文件输入（编辑时不能重新上传）
+                    const itemDiv = document.getElementById(`videoItem_${lastItem.id}`);
+                    if (itemDiv) {
+                        const fileInput = itemDiv.querySelector('input[type="file"]');
+                        if (fileInput) fileInput.disabled = true;
+                        // 填充描述输入框
+                        const descInput = itemDiv.querySelector('input[type="text"]');
+                        if (descInput) descInput.value = vid.description || '';
+                    }
+                }
+                
+                // 滚动到表单
+                document.getElementById('topics-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+            } catch (error) {
+                alert('❌ 加载主题失败: ' + error.message);
+            }
+        }
+        
+        // 删除主题
+        async function deleteTopic(topicId) {
+            if (!confirm('确定要删除这个主题吗？此操作不可恢复。')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/topics/${topicId}?client=${encodeURIComponent(currentClientId)}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('✅ 主题删除成功');
+                    loadTopics();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || '删除失败');
+                }
+            } catch (error) {
+                alert('❌ 删除失败: ' + error.message);
+            }
+        }
+        
+        // 取消编辑
+        function cancelTopicEdit() {
+            resetTopicForm();
+        }
+        
+        // 重置表单
+        function resetTopicForm() {
+            document.getElementById('editingTopicId').value = '';
+            document.getElementById('topicFormTitle').textContent = '新建主题';
+            document.getElementById('cancelTopicBtn').style.display = 'none';
+            
+            document.getElementById('topicName').value = '';
+            document.getElementById('topicDescription').value = '';
+            document.getElementById('contentLanguage').value = 'ja';
+            
+            topicImageItems = [];
+            topicVideoItems = [];
+            document.getElementById('topicImagesList').innerHTML = '';
+            document.getElementById('topicVideosList').innerHTML = '';
+            updateAddButtonsState();
+        }
+        
+    </script>
+</body>
+</html>

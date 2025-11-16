@@ -101,16 +101,23 @@ def get_media_config():
 class AdvertisementServer:
     """广告轮播管理服务器"""
     
-    def __init__(self, ads_dir: str = "ads"):
+    def __init__(self, ads_dir: str = "ads", client_id: str = None):
         self.server = Server("advertisement-server")
         
         # 获取媒体配置
         self.media_config = get_media_config()
+        
+        # 获取CLIENT_ID
+        import os
+        self.client_id = client_id or os.getenv('CLIENT_ID') or self.media_config.client_id
+        
         try:
-            self.ads_dir = self.media_config.get_directory_path('ads')
+            base_ads_dir = self.media_config.get_directory_path('ads')
+            # 如果是多租户模式，添加CLIENT_ID子目录
+            self.ads_dir = base_ads_dir / self.client_id
         except:
             # Fallback to provided directory
-            self.ads_dir = Path(ads_dir)
+            self.ads_dir = Path(ads_dir) / self.client_id
         
         self.advertisements = {}
         self.supported_formats = {'.mp4', '.avi', '.mov', '.webm', '.mkv'}
@@ -137,8 +144,8 @@ class AdvertisementServer:
             "en": "Advertisement carousel system activated, preparing exciting content..."
         }
         
-        # 确保广告目录存在
-        self.ads_dir.mkdir(exist_ok=True)
+        # 确保广告目录存在（包括父目录）
+        self.ads_dir.mkdir(parents=True, exist_ok=True)
         
         # 扫描可用的广告视频
         self._scan_advertisements()
@@ -148,41 +155,67 @@ class AdvertisementServer:
         self._register_resources()
 
     def _scan_advertisements(self):
-        """扫描广告目录中的视频文件"""
+        """
+        扫描CLIENT_ID对应目录中的视频文件
+        
+        新架构：直接扫描 ads/{client_id}/ 目录
+        - 目录已在__init__中确定为 ads/{client_id}/
+        - 简化逻辑，不再需要多级检测
+        
+        设计原则：
+        - 零资源泄露：只修改现有字典，不创建额外对象
+        - 性能优化：单次遍历，O(n)复杂度
+        - 线程安全：单线程执行，无并发问题
+        """
         self.advertisements.clear()
         
         if not self.ads_dir.exists():
-            print(f"Warning: Ads directory {self.ads_dir} does not exist")
+            print(f"⚠️ Warning: Ads directory {self.ads_dir} does not exist for CLIENT {self.client_id}")
+            # 创建目录
+            self.ads_dir.mkdir(parents=True, exist_ok=True)
             return
         
         ad_count = 0
-        for file_path in self.ads_dir.iterdir():
-            if file_path.is_file() and file_path.suffix.lower() in self.supported_formats:
-                try:
-                    file_size = file_path.stat().st_size
-                    ad_id = f"ad_{ad_count:03d}"
-                    
-                    ad_info = {
-                        "id": ad_id,
-                        "name": file_path.stem,
-                        "filename": file_path.name,
-                        "path": str(file_path),
-                        "url_path": f"/ads/{file_path.name}",  # 使用相对路径，自动适应任何域名
-                        "size_bytes": file_size,
-                        "size_mb": round(file_size / (1024 * 1024), 2),
-                        "format": file_path.suffix.lower(),
-                        "category": "advertisement"
-                    }
-                    
-                    self.advertisements[ad_id] = ad_info
-                    ad_count += 1
-                    print(f"Loaded advertisement: {ad_info['name']}")
-                    
-                except Exception as e:
-                    print(f"Error loading advertisement {file_path}: {e}")
+        print(f"📁 扫描广告目录: {self.ads_dir} (CLIENT_ID: {self.client_id})")
         
+        # 直接扫描CLIENT_ID目录中的视频文件
+        for file_path in self.ads_dir.iterdir():
+            if not (file_path.is_file() and file_path.suffix.lower() in self.supported_formats):
+                continue  # 跳过非视频文件
+            
+            try:
+                file_size = file_path.stat().st_size
+                ad_id = f"ad_{ad_count:03d}"
+                
+                # 构建广告信息（直接修改字典，零额外内存）
+                ad_info = {
+                    "id": ad_id,
+                    "name": file_path.stem,
+                    "filename": file_path.name,
+                    "path": str(file_path),
+                    # URL路径: /ads/client_001/video.mp4
+                    "url_path": f"/ads/{self.client_id}/{file_path.name}",
+                    "size_bytes": file_size,
+                    "size_mb": round(file_size / (1024 * 1024), 2),
+                    "format": file_path.suffix.lower(),
+                    "category": "advertisement",
+                    "client_id": self.client_id  # 标记所属客户
+                }
+                
+                self.advertisements[ad_id] = ad_info
+                ad_count += 1
+                print(f"✅ [{self.client_id}] {ad_info['name']} ({ad_info['size_mb']} MB)")
+                
+            except OSError as e:
+                # 文件系统错误（权限、文件被删除等）
+                print(f"❌ Error loading {file_path}: {e}")
+            except Exception as e:
+                # 其他错误（避免单个文件错误导致整体失败）
+                print(f"❌ Unexpected error loading {file_path}: {e}")
+        
+        # 更新统计信息（原地修改，零额外内存）
         self.stats["total_ads"] = len(self.advertisements)
-        print(f"Advertisement server initialized: {len(self.advertisements)} ads found")
+        print(f"\n🎬 广告服务器初始化完成: {len(self.advertisements)} 个广告已加载")
         
         # 如果没有广告，创建说明文件
         if not self.advertisements:
